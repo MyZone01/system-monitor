@@ -1,54 +1,53 @@
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_opengl3.h"
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <iostream>
+#include <cstdio>
+#include <cstring>
 
-int main()
-{
-    // Initialize GLFW window and OpenGL context
-    glfwInit();
-    GLFWwindow* window = glfwCreateWindow(640, 480, "Hello, world!", NULL, NULL);
-    glfwMakeContextCurrent(window);
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+using namespace std;
 
-    // Initialize Dear ImGui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 330");
+int main(int argc, char **argv) {
+    FILE *fp;
+    char ps_command[1024];
+    char ps_output[4096];
 
-    // Main loop
-    while (!glfwWindowShouldClose(window))
-    {
-        // Poll events
-        glfwPollEvents();
+    sprintf(ps_command, "ps -e -o state");
 
-        // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        // Show a "Hello, world!" message
-        ImGui::Text("Hello, world!");
-
-        // End the Dear ImGui frame
-        ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        glfwSwapBuffers(window);
+    fp = popen(ps_command, "r");
+    if (fp == NULL) {
+        cout << "Error: failed to execute the ps command" << endl;
+        return 1;
     }
 
-    // Cleanup
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-    glfwTerminate();
+    int running = 0;
+    int sleeping = 0;
+    int uninterruptible = 0;
+    int zombie = 0;
+    int traced_stopped = 0;
+    int interrupted = 0;
+
+    while (fgets(ps_output, sizeof(ps_output), fp) != NULL) {
+        if (strncmp(ps_output, "R", 1) == 0) {
+            running++;
+        } else if (strncmp(ps_output, "S", 1) == 0) {
+            sleeping++;
+        } else if (strncmp(ps_output, "D", 1) == 0) {
+            uninterruptible++;
+        } else if (strncmp(ps_output, "Z", 1) == 0) {
+            zombie++;
+        } else if (strncmp(ps_output, "T", 1) == 0) {
+            traced_stopped++;
+        } else if (strncmp(ps_output, "t", 1) == 0) {
+            interrupted++;
+        }
+    }
+
+    pclose(fp);
+
+    cout << "Running: " << running << endl;
+    cout << "Sleeping: " << sleeping << endl;
+    cout << "Uninterruptible: " << uninterruptible << endl;
+    cout << "Zombie: " << zombie << endl;
+    cout << "Traced/Stopped: " << traced_stopped << endl;
+    cout << "Interrupted: " << interrupted << endl;
+
     return 0;
 }
-

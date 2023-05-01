@@ -1,5 +1,3 @@
-RUN GUI APP ON WSL
-
 #   🖥️ SYSTEM MONITOR
 ##  DESCRIPTION
 System monitor is an application you are about to work on is a [**Desktop System Monitor**](https://en.wikipedia.org/wiki/System_monitor). The app will monitor the computer system resources and performance, such as CPU, RAM, SWAP, Fan, Network and more.

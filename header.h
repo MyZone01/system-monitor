@@ -9,11 +9,18 @@
 #include <dirent.h>
 #include <vector>
 #include <iostream>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <string>
+#include <unistd.h>
+#include <sys/sysinfo.h>
+#include <pwd.h>
+#include <stdlib.h>
+#include <string.h>
 #include <cmath>
 // lib to read from file
 #include <fstream>
 // for the name of the computer and the logged in user
-#include <unistd.h>
 #include <limits.h>
 // this is for us to get the cpu information
 // mostly in unix system
@@ -22,7 +29,6 @@
 // this is for the memory usage and other memory visualization
 // for linux gotta find a way for windows
 #include <sys/types.h>
-#include <sys/sysinfo.h>
 #include <sys/statvfs.h>
 // for time and date
 #include <ctime>
@@ -99,6 +105,10 @@ struct RX
 // student TODO : system stats
 string CPUinfo();
 const char *getOsName();
+const char* getUser();
+const char* getComputerName();
+const char* getCPUType();
+void DrawTaskManager();
 
 // student TODO : memory and processes
 

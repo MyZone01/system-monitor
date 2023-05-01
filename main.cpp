@@ -48,7 +48,11 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position)
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
 
-    // student TODO : add code here for the system window
+    ImGui::Text("Operating System used: %s", getOsName());
+    ImGui::Text("User : %s", getUser());
+    ImGui::Text("Computer Name : %s", getComputerName());
+    ImGui::Text("CPU Type : %s", getCPUType());
+    DrawTaskManager();
 
     ImGui::End();
 }
