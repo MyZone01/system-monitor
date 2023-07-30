@@ -54,9 +54,8 @@ $ tree system-monitor
     +   [x] The total number of tasks/processes that are currently running, sleeping, uninterruptible, zombie, traced/stopped or interrupted.
     +   [x] Type of CPU
     +   [x] A tabbed section containing `CPU`, `Power`, `Fan` and `Thermal` information, this information include a performance graphic for all those topics.
-    +   [ ] This graph should contain some kind of checkbox or button to be able to stop the animation whenever the user desires to do so.
-    Additionally, it should also have two slider bars.
-    The first slider bar should be able to control the `FPS` of the graph, and the second slider bar should control the `y` scale of the graph.
+    +   [x] This graph should contain some kind of checkbox or button to be able to stop the animation whenever the user desires to do so.
+    +   [x] Additionally, it should also have two slider bars. The first slider bar should be able to control the `FPS` of the graph, and the second slider bar should control the `y` scale of the graph.
     +   [x] `CPU` should present this graph with an overlay text saying the current percentage of the CPU.
     +   [ ] `Fan`, should include the following information, the status of the fan, (enable/active), the current speed and the level. And should also present the graph stated above.
     +   [ ] `Thermal`, should present the graph stated above with an overlay text saying the current temperature of the computer (usually the cpu sensor). 

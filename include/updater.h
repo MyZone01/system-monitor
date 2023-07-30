@@ -5,4 +5,5 @@
 namespace Updater
 {
     void ProcessesUpdater(System *);
+    void CPUUpdater(System *, int *);
 }

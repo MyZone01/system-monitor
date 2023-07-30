@@ -55,7 +55,7 @@ std::vector<std::vector<long long>> ReadNetworkStats() {
 
 // Function to convert bytes to a human-readable format (GB, MB, KB)
 std::string formatBytes(long long bytes) {
-    const char* units[] = {"B", "KB", "MB", "GB"};
+    const char *units[] = {"B", "KB", "MB", "GB"};
     int index = 0;
 
     double value = static_cast<double>(bytes);
@@ -126,7 +126,7 @@ const char *getOsName() {
 #endif
 }
 
-void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system) {
+void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system, int* fps) {
     const char *OS = getOsName();
     std::string Kernel = system.Kernel();
     int Cores = system.cpu_.CoreCount();
@@ -134,6 +134,11 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
     std::string CPUName = system.cpu_.GetCPUType();
     std::string Hostname = system.Hostname();
     char *username = std::getenv("USER");
+
+    // Variables to control FPS, y-scale, and animation stop
+    static float yScale = 100.0f;       // Default y-scale is set to 100
+    static bool animation = true;       // Default animation is not stopped
+    // static double lastFrameTime = 0.0;  // Variable to store the time of the last frame
 
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
@@ -152,16 +157,32 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
         // CPU tab
         if (ImGui::BeginTabItem("CPU")) {
             ImGui::Text("CPU Util: %d [%%]", (int)(system.cpu_usage * 100));
-
             ImGui::ProgressBar(system.cpu_usage, ImVec2(-1, 0), "");
+
             ImGui::Text("CPU Average 1 minute: %d [%%]", (int)(system.cpu1m / (float)Cores) * 100);
             ImGui::ProgressBar(system.cpu1m / (float)Cores, ImVec2(-1, 0), "");
+
             ImGui::Text("CPU Average 5 minute: %d [%%]", (int)(system.cpu5m / (float)Cores) * 100);
             ImGui::ProgressBar(system.cpu5m / (float)Cores, ImVec2(-1, 0), "");
+
             sprintf(overlay, "CPU Util (45s): \n\nAVG: %d [%%]", (int)(system.cpu1m / (float)Cores * 100));
             ImGui::Text(overlay);
-            ImGui::SameLine();
-            ImGui::PlotLines("", system.cpu_.Cpu_Usage_Log, IM_ARRAYSIZE(system.cpu_.Cpu_Usage_Log), 0, "", 0, 100, ImVec2(0, 80));
+
+            // Add the first slider bar for controlling FPS
+            ImGui::SliderInt("FPS", fps, 1, 60);  // Range from 1 to 60 FPS
+
+            // Add the second slider bar for controlling y-scale
+            ImGui::SliderFloat("Y-Scale", &yScale, 5.0f, 100.0f);  // Range from 10 to 1000
+
+            // Add a checkbox to stop the animation
+            ImGui::Checkbox("Animation", &animation);
+
+            // Check if the animation is not stopped before rendering the plot
+            if (animation) {
+                ImGui::PlotLines("", system.cpu_.Cpu_Usage_Log, IM_ARRAYSIZE(system.cpu_.Cpu_Usage_Log), 0, "", 0, yScale, ImVec2(400, 200));
+            }
+            // ImGui::SameLine();
+            // ImGui::PlotLines("", system.cpu_.Cpu_Usage_Log, IM_ARRAYSIZE(system.cpu_.Cpu_Usage_Log), 0, "", 0, 200, ImVec2(400, 200));
 
             ImGui::EndTabItem();
         }
@@ -421,8 +442,11 @@ int main(int, char **) {
 
     char overlay[32];
     System system;
+    static int fps = 30;                // Default FPS is set to 30
 
-    std::thread Updater(Updater::ProcessesUpdater, &system);
+    std::thread Updater1(Updater::ProcessesUpdater, &system);
+    Updater1.detach();
+    std::thread Updater(Updater::CPUUpdater, &system, &fps);
     Updater.detach();
 
     bool done = false;
@@ -448,7 +472,7 @@ int main(int, char **) {
 
             systemWindow("== System ==",
                          ImVec2((mainDisplay.x / 2) - 10, (mainDisplay.y / 2) + 30),
-                         ImVec2(10, 10), overlay, system);
+                         ImVec2(10, 10), overlay, system, &fps);
 
             networkWindow("== Network ==",
                           ImVec2(mainDisplay.x - 20, (mainDisplay.y / 2) - 60),
