@@ -14,20 +14,20 @@
 #CXX = g++
 #CXX = clang++
 
-EXE = monitor
+BUILD_TARGET = monitor
+BUILD_DIR = build
+EXE = $(addprefix $(BUILD_DIR)/, $(basename $(notdir $(BUILD_TARGET))))
 IMGUI_DIR = imgui/lib/
 SOURCES = main.cpp
-SOURCES += system.cpp
-SOURCES += mem.cpp
-SOURCES += network.cpp
+SOURCES += src/format.cpp src/process.cpp src/system.cpp src/processor.cpp src/logger.cpp src/updater.cpp
 SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_demo.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
 SOURCES += $(IMGUI_DIR)/backend/imgui_impl_sdl.cpp $(IMGUI_DIR)/backend/imgui_impl_opengl3.cpp
-OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
+OBJS = $(addprefix $(BUILD_DIR)/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 UNAME_S := $(shell uname -s)
 
-CXXFLAGS = -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend
+CXXFLAGS = -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backend -Isrc/ -Iinclude/
 CXXFLAGS += -g -Wall -Wformat
-LIBS =
+LIBS = -lpthread
 
 ##---------------------------------------------------------------------
 ## OPENGL LOADER
@@ -81,7 +81,7 @@ ifeq ($(UNAME_S), Darwin) #APPLE
 	CFLAGS = $(CXXFLAGS)
 endif
 
-ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
+ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)	#MINGW
    ECHO_MESSAGE = "MinGW"
    LIBS += -lgdi32 -lopengl32 -limm32 `pkg-config --static --libs sdl2`
 
@@ -93,19 +93,22 @@ endif
 ## BUILD RULES
 ##---------------------------------------------------------------------
 
-%.o:%.cpp
+$(BUILD_DIR)/%.o:src/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-%.o:$(IMGUI_DIR)/%.cpp
+$(BUILD_DIR)/%.o:%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-%.o:$(IMGUI_DIR)/backend/%.cpp
+$(BUILD_DIR)/%.o:$(IMGUI_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-%.o:imgui/lib/gl3w/GL/%.c
+$(BUILD_DIR)/%.o:$(IMGUI_DIR)/backend/%.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(BUILD_DIR)/%.o:imgui/lib/gl3w/GL/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-%.o:imgui/lib/glad/src/%.c
+$(BUILD_DIR)/%.o:imgui/lib/glad/src/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 all: $(EXE)
@@ -116,3 +119,7 @@ $(EXE): $(OBJS)
 
 clean:
 	rm -f $(EXE) $(OBJS)
+	rm -r $(BUILD_DIR)
+
+setup:
+	mkdir $(BUILD_DIR)

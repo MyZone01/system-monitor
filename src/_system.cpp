@@ -1,22 +1,15 @@
 #include "header.h"
 
-// get cpu id and information, you can use `proc/cpuinfo`
-string CPUinfo()
-{
+string CPUinfo() {
     char CPUBrandString[0x40];
     unsigned int CPUInfo[4] = {0, 0, 0, 0};
 
-    // unix system
-    // for windoes maybe we must add the following
-    // __cpuid(regs, 0);
-    // regs is the array of 4 positions
     __cpuid(0x80000000, CPUInfo[0], CPUInfo[1], CPUInfo[2], CPUInfo[3]);
     unsigned int nExIds = CPUInfo[0];
 
     memset(CPUBrandString, 0, sizeof(CPUBrandString));
 
-    for (unsigned int i = 0x80000000; i <= nExIds; ++i)
-    {
+    for (unsigned int i = 0x80000000; i <= nExIds; ++i) {
         __cpuid(i, CPUInfo[0], CPUInfo[1], CPUInfo[2], CPUInfo[3]);
 
         if (i == 0x80000002)
@@ -30,9 +23,7 @@ string CPUinfo()
     return str;
 }
 
-// getOsName, this will get the OS of the current computer
-const char *getOsName()
-{
+const char* getOsName() {
 #ifdef _WIN32
     return "Windows 32-bit";
 #elif _WIN64
@@ -51,14 +42,9 @@ const char *getOsName()
 }
 
 const char* getUser() {
-#ifdef _WIN32
-    DWORD usernameSizeWin = usernameSize;
-    return GetUserName(username, &usernameSizeWin);
-#else
     struct passwd* pw = getpwuid(getuid());
     std::string username = pw->pw_name;
     return username.c_str();
-#endif
 }
 
 const char* getComputerName() {
@@ -73,14 +59,14 @@ const char* getComputerName() {
 
 const char* getCPUType() {
     FILE* fp = fopen("/proc/cpuinfo", "r");
-    if(fp == NULL) {
+    if (fp == NULL) {
         return "";
     }
     char line[256];
-    while(fgets(line, sizeof(line), fp)) {
-        if(strncmp(line, "model name", 10) == 0) {
+    while (fgets(line, sizeof(line), fp)) {
+        if (strncmp(line, "model name", 10) == 0) {
             char* colon = strchr(line, ':');
-            if(colon) {
+            if (colon) {
                 return colon;
             }
             break;
@@ -90,7 +76,6 @@ const char* getCPUType() {
     return "";
 }
 
-// Utility function to run a command and return its output as a string
 std::string runCommand(const char* cmd) {
     std::vector<char> buffer(128);
     std::string result;
@@ -104,23 +89,38 @@ std::string runCommand(const char* cmd) {
     return result;
 }
 
-// main function to display system information
 void DrawTaskManager() {
-     // Get process information using ps command
     std::string psOutput = runCommand("ps -e -o state=");
     int running = 0, sleeping = 0, uninterruptible = 0, zombie = 0, tracedStopped = 0, interrupted = 0, total = 0;
     for (char& c : psOutput) {
         switch (c) {
-            case 'R': total++; running++; break;
-            case 'S': total++; sleeping++; break;
-            case 'D': total++; uninterruptible++; break;
-            case 'Z': total++; zombie++; break;
-            case 'T': total++; tracedStopped++; break;
-            case 't': total++; interrupted++; break;
+            case 'R':
+                total++;
+                running++;
+                break;
+            case 'S':
+                total++;
+                sleeping++;
+                break;
+            case 'D':
+                total++;
+                uninterruptible++;
+                break;
+            case 'Z':
+                total++;
+                zombie++;
+                break;
+            case 'T':
+                total++;
+                tracedStopped++;
+                break;
+            case 't':
+                total++;
+                interrupted++;
+                break;
         }
     }
 
-    // Display process information using Dear ImGUI
     ImGui::Text("Total number of processes: %d", total);
     ImGui::Text("Running: %d", running);
     ImGui::Text("Sleeping: %d", sleeping);
