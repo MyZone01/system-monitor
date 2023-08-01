@@ -1,81 +1,74 @@
-+   [ ] Explain each terms of the subject
-    +   [ ] OS
-        +   [ ] User logged in
-        +   [ ] Hostname
-    +   [ ] CPU
-        +   [ ] Cores
-        +   [ ] Type of CPU
-    +   [ ] RAM
-    +   [ ] SWAP
-    +   [ ] Network
-    +   [ ] GUI
-    +   [ ] Process
-        +   [ ] State
-        +   [ ] PID
-        +   [ ] PPID
-        +   [ ] Name
-    +   [ ] FPS
-    +   [ ] Slider
-    +   [ ] Network
-        +   [ ] Receiver RX
-        +   [ ] Transmitter TX
-        +   [ ] Bytes, Packets, Errs, Drop, FIFO, COLLS, carrier
-+   [ ] ImGUI initialization
-+   [ ] Explain each functions of system
-    +   [ ] SysFileRead
-    +   [ ] OperationSystem
-    +   [ ] Hostname
-    +   [ ] Kernel
-    +   [ ] CPU
-    +   [ ] TotalProcesses
-    +   [ ] Processes
-    +   [ ] MemoryUtilization
-    +   [ ] MemoryBuffer
-    +   [ ] MemoryShared
-    +   [ ] MemorySwap
-    +   [ ] RunningProcesses
-    +   [ ] UpTime
-    +   [ ] GetTemperature
-    +   [ ] System
-+   [ ] Explain each functions of process
-    +   [ ] procFileRead
-    +   [ ] Name
-    +   [ ] Status
-    +   [ ] ParentPid
-    +   [ ] SetPid
-    +   [ ] CpuUtilization
-    +   [ ] Command
-    +   [ ] Ram
-    +   [ ] User
-    +   [ ] UpTime
-    +   [ ] Exist
-    +   [ ] Update
-    +   [ ] Log
-    +   [ ] ReadName
-    +   [ ] ReadParent
-    +   [ ] ReadCommand
-    +   [ ] ReadRam
-    +   [ ] ReadStatus
-    +   [ ] ReadPid
-    +   [ ] ReadCpu
-    +   [ ] ReadUptime
-+   [ ] Explain each functions of processor
-    +   [ ] GetCPUTimes
-    +   [ ] Utilization
-    +   [ ] CoreCount
-    +   [ ] GetCPUType
-    +   [ ] CPUMean1m
-    +   [ ] CPUMean5m
-    +   [ ] Processor
-+   [ ] Explain string
-+   [ ] UI
-    +   [ ] Window
-        +   [ ] TabBar
-            +   [ ] TabItem
-        +   [ ] Text/Colored
-        +   [ ] ProgressBar
-        +   [ ] SameLine
-        +   [ ] Separator
-        +   [ ] PlotLines
-        +   [ ] Columns
-            +   [ ] NextColumn
++   [x] Explain each terms of the subject
+    +   [x] OS
+        +   [x] User logged in
+        +   [x] Hostname
+    +   [x] CPU
+        +   [x] Cores
+        +   [x] Type of CPU
+    +   [x] RAM
+    +   [x] SWAP
+    +   [x] Network
+    +   [x] GUI
+    +   [x] Process
+        +   [x] State
+        +   [x] PID
+        +   [x] PPID
+        +   [x] Name
+    +   [x] FPS
+    +   [x] Slider
+    +   [x] Network
+        +   [x] Receiver RX
+        +   [x] Transmitter TX
+        +   [x] Bytes, Packets, Errs, Drop, FIFO, COLLS, carrier
++   [x] ImGUI initialization
++   [x] Explain each functions of system
+    +   [x] SysFileRead
+    +   [x] OperationSystem
+    +   [x] Hostname
+    +   [x] Kernel
+    +   [x] CPU
+    +   [x] TotalProcesses
+    +   [x] Processes
+    +   [x] MemoryUtilization
+    +   [x] MemoryBuffer
+    +   [x] MemoryShared
+    +   [x] MemorySwap
+    +   [x] RunningProcesses
+    +   [x] UpTime
+    +   [x] GetTemperature
+    +   [x] System
++   [x] Explain each functions of process
+    +   [X] Exist
+    +   [X] procFileRead
+    +   [X] Name
+    +   [x] Status
+    +   [x] ParentPid
+    +   [x] CpuUtilization
+    +   [x] Command
+    +   [x] Ram
+    +   [x] User
+    +   [x] UpTime
+    +   [x] Update
++   [x] Explain each functions of processor
+    +   [x] GetCPUTimes
+    +   [x] Utilization
+    +   [x] CoreCount
+    +   [x] GetCPUType
+    +   [x] CPUMean1m - 5m
+    +   [x] Processor
++   [x] Explain string
++   [x] Explain vector
++   [x] Explain class
++   [x] Explain Name spacing modularity
++   [x] Explain ifstream and fopen
++   [x] UI
+    +   [x] Window
+        +   [x] TabBar
+            +   [x] TabItem
+        +   [x] Text/Colored
+        +   [x] ProgressBar
+        +   [x] SameLine
+        +   [x] PlotLines
+        +   [x] Columns
+            +   [x] NextColumn
+            +   [x] Separator

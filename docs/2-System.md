@@ -296,19 +296,15 @@ In summary, each function calculates a specific memory metric and returns the re
 ##  Running Processes
 The given function is a member function of a class called `System`, and it is named `RunningProcesses`. Let's break down the function's implementation step by step:
 
-1. `int System::RunningProcesses()`: This line indicates that the function `RunningProcesses` belongs to the class `System` and returns an integer value.
+1. `int running_counter = 0;`: This line declares an integer variable named `running_counter` and initializes it to zero. This variable will be used to count the number of running processes.
 
-2. `int running_counter = 0;`: This line declares an integer variable named `running_counter` and initializes it to zero. This variable will be used to count the number of running processes.
+2. `for (auto &indx_process : processes_) {`: This line starts a loop that iterates through a collection of processes. The loop uses a range-based for loop, where `indx_process` is a reference to each element in the `processes_` collection. The `processes_` collection seems to be a member variable of the `System` class that holds information about different processes.
 
-3. `for (auto &indx_process : processes_) {`: This line starts a loop that iterates through a collection of processes. The loop uses a range-based for loop, where `indx_process` is a reference to each element in the `processes_` collection. The `processes_` collection seems to be a member variable of the `System` class that holds information about different processes.
+3. `if (indx_process.Read_Status() == "R") {`: This line checks the status of the current process represented by `indx_process`. It calls the member function `Read_Status()` on the process object to get its status. The condition checks if the status is equal to "R", which typically indicates that the process is running.
 
-4. `if (indx_process.Read_Status() == "R") {`: This line checks the status of the current process represented by `indx_process`. It calls the member function `Read_Status()` on the process object to get its status. The condition checks if the status is equal to "R," which typically indicates that the process is running.
+4. `running_counter++;`: If the process is found to be running (status is "R"), the `running_counter` variable is incremented by one. This means that the function is counting the number of running processes.
 
-5. `running_counter++;`: If the process is found to be running (status is "R"), the `running_counter` variable is incremented by one. This means that the function is counting the number of running processes.
-
-6. `}`: This closing brace indicates the end of the loop.
-
-7. `return running_counter;`: After the loop has finished iterating through all the processes, the function returns the final value of `running_counter`, which represents the total number of running processes in the `processes_` collection.
+5. `return running_counter;`: After the loop has finished iterating through all the processes, the function returns the final value of `running_counter`, which represents the total number of running processes in the `processes_` collection.
 
 In summary, the `RunningProcesses` function takes a collection of processes and counts the number of processes that are currently running by checking their status. It returns the count of running processes as an integer.
 
