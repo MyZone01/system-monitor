@@ -27,15 +27,18 @@ void Updater::CPUUpdater(System* system, int* targetFPS) {
 
     while (true) {
         // Calculate the update interval based on targetFPS
-        const int updateInterval = 1000 / *targetFPS;
-        // Calculate the time difference since the last update
-        // std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
-        // std::chrono::milliseconds timeDifference = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastUpdate);
+        int updateInterval = 1000;
+        if (*targetFPS > 0) {
+            updateInterval = 1000 / *targetFPS;
+            // Calculate the time difference since the last update
+            // std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
+            // std::chrono::milliseconds timeDifference = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastUpdate);
 
-        // // If the time difference is greater than or equal to the update interval, update the CPU utilization and reset the last update time
-        // if (timeDifference.count() >= updateInterval) {
+            // // If the time difference is greater than or equal to the update interval, update the CPU utilization and reset the last update time
+            // if (timeDifference.count() >= updateInterval) {
             system->cpu_usage = system->cpu_.Utilization();
-        // }
+            // }
+        }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval));
     }

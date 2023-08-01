@@ -126,7 +126,7 @@ const char *getOsName() {
 #endif
 }
 
-void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system, int* fps) {
+void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system, int *fps) {
     const char *OS = getOsName();
     std::string Kernel = system.Kernel();
     int Cores = system.cpu_.CoreCount();
@@ -136,8 +136,8 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
     char *username = std::getenv("USER");
 
     // Variables to control FPS, y-scale, and animation stop
-    static float yScale = 100.0f;       // Default y-scale is set to 100
-    static bool animation = true;       // Default animation is not stopped
+    static float yScale = 100.0f;  // Default y-scale is set to 100
+    static bool animation = true;  // Default animation is not stopped
     // static double lastFrameTime = 0.0;  // Variable to store the time of the last frame
 
     ImGui::Begin(id);
@@ -168,19 +168,22 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
             sprintf(overlay, "CPU Util (45s): \n\nAVG: %d [%%]", (int)(system.cpu1m / (float)Cores * 100));
             ImGui::Text(overlay);
 
-            // Add the first slider bar for controlling FPS
-            ImGui::SliderInt("FPS", fps, 1, 60);  // Range from 1 to 60 FPS
-
-            // Add the second slider bar for controlling y-scale
-            ImGui::SliderFloat("Y-Scale", &yScale, 5.0f, 100.0f);  // Range from 10 to 1000
-
             // Add a checkbox to stop the animation
             ImGui::Checkbox("Animation", &animation);
 
             // Check if the animation is not stopped before rendering the plot
-            if (animation) {
-                ImGui::PlotLines("", system.cpu_.Cpu_Usage_Log, IM_ARRAYSIZE(system.cpu_.Cpu_Usage_Log), 0, "", 0, yScale, ImVec2(400, 200));
+            if (!animation) {
+                *fps = 0;
+            } else {
+                // Add the first slider bar for controlling FPS
+                ImGui::SliderInt("FPS", fps, 0, 60);  // Range from 1 to 60 FPS
             }
+
+
+            // Add the second slider bar for controlling y-scale
+            ImGui::SliderFloat("Y-Scale", &yScale, 5.0f, 100.0f);  // Range from 10 to 1000
+
+            ImGui::PlotLines("", system.cpu_.Cpu_Usage_Log, IM_ARRAYSIZE(system.cpu_.Cpu_Usage_Log), 0, "", 0, yScale, ImVec2(400, 200));
             // ImGui::SameLine();
             // ImGui::PlotLines("", system.cpu_.Cpu_Usage_Log, IM_ARRAYSIZE(system.cpu_.Cpu_Usage_Log), 0, "", 0, 200, ImVec2(400, 200));
 
@@ -306,7 +309,6 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position) {
         ImGui::NextColumn();
         ImGui::Text("TX");
         ImGui::NextColumn();
-
         ImGui::Separator();
 
         std::vector<std::string> rxLabels = {"Bytes", "Packets", "Errs", "Drop", "Fifo", "Frame", "Compressed", "Multicast"};
@@ -442,7 +444,7 @@ int main(int, char **) {
 
     char overlay[32];
     System system;
-    static int fps = 30;                // Default FPS is set to 30
+    static int fps = 30;  // Default FPS is set to 30
 
     std::thread Updater1(Updater::ProcessesUpdater, &system);
     Updater1.detach();
