@@ -1,3 +1,4 @@
 *.o
 monitor
 learn/main
+test/out

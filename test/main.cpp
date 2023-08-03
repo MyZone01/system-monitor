@@ -1,34 +1,53 @@
-#include <dirent.h>
-#include <errno.h>
-#include <linux/stat.h>
-#include <sys/sysinfo.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <cstddef>
-#include <fstream>
+#include <cstdio>
 #include <iostream>
-#include <set>
+#include <sstream>
 #include <string>
-#include <thread>
 #include <vector>
 
-std::vector<std::string> SysFileRead(std::string filename) {
-    std::vector<std::string> words;
-    std::string path = "/proc/" + filename;
-    std::ifstream proc_Sys(path.c_str(), std::ifstream::in);
-    std::string str;
-    while (proc_Sys >> str) {
-        words.push_back(str);
+// Function to fetch disk usage information for /dev/sdc on WSL
+std::pair<long long, long long> GetDiskUsageOnWSL() {
+    // Open a pipe to run the 'df' command and read its output
+    FILE* pipe = popen("df -B1 /dev/sdc", "r");
+    if (!pipe) {
+        std::cerr << "Error opening pipe to df command." << std::endl;
+        return std::make_pair(-1, -1);
     }
-    proc_Sys.close();
-    return words;
+
+    // Buffer to read the command output
+    char buffer[1024];
+
+    // Read the output line by line and parse the disk usage information
+    std::string diskInfo;
+    fgets(buffer, sizeof(buffer), pipe);
+    fgets(buffer, sizeof(buffer), pipe);
+    diskInfo = buffer;
+
+    // Close the pipe
+    pclose(pipe);
+
+    // Parse the disk usage information
+    std::istringstream iss(diskInfo);
+    std::string filesystem, size, used, avail, usePercent, mountedOn;
+    iss >> filesystem >> size >> used >> avail >> usePercent >> mountedOn;
+
+    // Convert the size and used values from strings to long long (in bytes)
+    long long sizeBytes, usedBytes;
+    sizeBytes = std::stoll(size);
+    usedBytes = std::stoll(used);
+
+    return std::make_pair(sizeBytes, usedBytes);
 }
 
-int main(int argc, char const *argv[]) {
-    std::vector<std::string> words = SysFileRead("version");
-    for (auto &&word : words) {
-        std::cout << word.c_str();
+// Example usage
+int main() {
+    std::pair<long long, long long> diskUsageInfo = GetDiskUsageOnWSL();
+
+    if (diskUsageInfo.first != -1 && diskUsageInfo.second != -1) {
+        // Print the size and used part of /dev/sdc in bytes
+        std::cout << "Size of /dev/sdc: " << diskUsageInfo.first << " bytes" << std::endl;
+        std::cout << "Used part of /dev/sdc: " << diskUsageInfo.second << " bytes" << std::endl;
+    } else {
+        std::cout << "Error fetching disk usage information for /dev/sdc." << std::endl;
     }
 
     return 0;

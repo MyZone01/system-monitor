@@ -19,14 +19,18 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+
+#include <cstdio>
 #include <cmath>
 #include <ctime>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <map>
 #include <sstream>
 #include <string>
 #include <thread>
+#include <array>
 #include <vector>
 
 #include "imgui.h"

@@ -59,40 +59,35 @@ $ tree system-monitor
     +   [x] `CPU` should present this graph with an overlay text saying the current percentage of the CPU.
     +   [ ] `Fan`, should include the following information, the status of the fan, (enable/active), the current speed and the level. And should also present the graph stated above.
     +   [ ] `Thermal`, should present the graph stated above with an overlay text saying the current temperature of the computer (usually the cpu sensor). 
-    example :
 
     ![image](assets/system.gif)
 
-+   [ ] **Memory and process monitor**, that will contain :
++   [x] **Memory and process monitor**, that will contain :
     +   [x] The Physic Memory (RAM) being used, it must have some kind of visual display of this usage.
     +   [x] The Virtual Memory (SWAP) being used, it should also include a visual display.
-    +   [ ] The Disk usage, same here.
-    +   [ ] A tab bar that should contain a table of processes with the following columns :
+    +   [x] The Disk usage, same here.
+    +   [x] A tab bar that should contain a table of processes with the following columns :
     +   [x] **PID**, with the process identification.
     +   [x] **Name**, name of the process.
     +   [x] **State**, current state of the process.
     +   [x] **CPU usage**, how much CPU the process is using in percentage.
     +   [x] **Memory usage**, how much memory the process is using in percentage.
-    +   [ ] A text box that lets the user filter the table. Users must be able to select multiple rows of the table.
-    example :
+    +   [x] A text box that lets the user filter the table.
+    +   [ ] Users must be able to select multiple rows of the table.
 
     ![image](assets/mem.gif)
 
 +   [ ] **Network**, that will contain :
-    +   [ ] The network ipv4, (`lo`, `wlp5s0` and other networks that the computer may have).
-    +   [ ] A tab bar that should contain two tables :
+    +   [x] The network ipv4, (`lo`, `wlp5s0` and other networks that the computer may have).
+    +   [x] A tab bar that should contain two tables :
     +   [x] `RX` (network receiver) containing the following data : bytes, packets, errs, drop, fifo, frame, compressed and multicast.
     +   [x] `TX` (network transmitter) containing the following data : bytes, packets, errs, drop, fifo, colls, carrier and compressed.
     +   [x] It should also contain a tabbed section for both `RX` and `TX`, those sections should display a visual usage (ex: a progress bar), of all network present on the computer. This visual display should obey the following rules:
-    +   [ ] Each network should be converted from **bytes** to **GB**, **KB** or **MB** depending on the value. It should not display values that
+    +   [x] Each network should be converted from **bytes** to **GB**, **KB** or **MB** depending on the value. It should not display values that
       are too big or too small. In other words it should be adjustable.
-      example :
-
-      **452755738 bytes** => **431.78 MB**. // perfect\
-      **452755738 bytes** => **0.42 GB**. // too small\
-      **452755738 bytes** => **442144.28.6 KB**. // too big
-
+        **452755738 bytes** => **431.78 MB**. // perfect\
+        **452755738 bytes** => **0.42 GB**. // too small\
+        **452755738 bytes** => **442144.28.6 KB**. // too big
     +   [ ] The visual display should go from 0GB to 2GB
-    example :
 
     ![image](assets/network.gif)

@@ -56,6 +56,8 @@
     +   [x] GetCPUType
     +   [x] CPUMean1m - 5m
     +   [x] Processor
++   [ ] Explain each functions of networks
+    +   [ ] 
 +   [x] Explain string
 +   [x] Explain vector
 +   [x] Explain class

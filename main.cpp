@@ -24,12 +24,19 @@ using namespace gl;
 #include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #endif
 
-std::vector<std::vector<long long>> ReadNetworkStats() {
+// Define a structure to hold interface stats
+struct InterfaceStats {
+    std::string interfaceName;
+    std::vector<long long> stats;
+};
+
+std::vector<InterfaceStats> ReadNetworkStats() {
     std::ifstream file("/proc/net/dev");
-    std::vector<std::vector<long long>> stats;
+    std::vector<InterfaceStats> stats;
 
     if (file) {
         std::string line;
+        std::getline(file, line);  // Skip the header line
         std::getline(file, line);  // Skip the header line
 
         while (std::getline(file, line)) {
@@ -44,7 +51,8 @@ std::vector<std::vector<long long>> ReadNetworkStats() {
                 interfaceStats.push_back(value);
             }
 
-            stats.push_back(interfaceStats);
+            // Create an InterfaceStats object and add it to the vector
+            stats.push_back({interface, interfaceStats});
         }
 
         file.close();
@@ -54,7 +62,7 @@ std::vector<std::vector<long long>> ReadNetworkStats() {
 }
 
 // Function to convert bytes to a human-readable format (GB, MB, KB)
-std::string formatBytes(long long bytes) {
+std::string formatBytes(long bytes) {
     const char *units[] = {"B", "KB", "MB", "GB"};
     int index = 0;
 
@@ -71,12 +79,13 @@ std::string formatBytes(long long bytes) {
 }
 
 // Function to calculate the progress value based on received and total bytes
-float calculateProgress(long long received, long long total) {
+float calculateProgress(long received, long total) {
     if (total == 0)
         return 0.0f;
 
     float progress = static_cast<float>(received) / static_cast<float>(total);
-    return std::min(std::max(progress, 0.0f), 1.0f);
+    return progress;
+    // return std::min(std::max(progress, 0.0f), 1.0f);
 }
 
 float GetCPUUsage() {
@@ -126,6 +135,44 @@ const char *getOsName() {
 #endif
 }
 
+bool IsSubstring(const std::string &str, const std::string &substring) {
+    return str.find(substring) != std::string::npos;
+}
+
+// Function to fetch disk usage information for /dev/sdc on WSL
+std::pair<long long, long long> GetDiskUsageOnWSL() {
+    // Open a pipe to run the 'df' command and read its output
+    FILE* pipe = popen("df -B1 /dev/sdc", "r");
+    if (!pipe) {
+        std::cerr << "Error opening pipe to df command." << std::endl;
+        return std::make_pair(-1, -1);
+    }
+
+    // Buffer to read the command output
+    char buffer[1024];
+
+    // Read the output line by line and parse the disk usage information
+    std::string diskInfo;
+    fgets(buffer, sizeof(buffer), pipe);
+    fgets(buffer, sizeof(buffer), pipe);
+    diskInfo = buffer;
+
+    // Close the pipe
+    pclose(pipe);
+
+    // Parse the disk usage information
+    std::istringstream iss(diskInfo);
+    std::string filesystem, size, used, avail, usePercent, mountedOn;
+    iss >> filesystem >> size >> used >> avail >> usePercent >> mountedOn;
+
+    // Convert the size and used values from strings to long long (in bytes)
+    long long sizeBytes, usedBytes;
+    sizeBytes = std::stoll(size);
+    usedBytes = std::stoll(used);
+
+    return std::make_pair(sizeBytes, usedBytes);
+}
+
 void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system, int *fps) {
     const char *OS = getOsName();
     std::string Kernel = system.Kernel();
@@ -153,7 +200,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
 
     ImGui::Separator();
 
-    if (ImGui::BeginTabBar("TabBar")) {
+    if (ImGui::BeginTabBar("CPUTabBar")) {
         // CPU tab
         if (ImGui::BeginTabItem("CPU")) {
             ImGui::Text("CPU Util: %d [%%]", (int)(system.cpu_usage * 100));
@@ -165,9 +212,6 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
             ImGui::Text("CPU Average 5 minute: %d [%%]", (int)(system.cpu5m / (float)Cores) * 100);
             ImGui::ProgressBar(system.cpu5m / (float)Cores, ImVec2(-1, 0), "");
 
-            sprintf(overlay, "CPU Util (45s): \n\nAVG: %d [%%]", (int)(system.cpu1m / (float)Cores * 100));
-            ImGui::Text(overlay);
-
             // Add a checkbox to stop the animation
             ImGui::Checkbox("Animation", &animation);
 
@@ -178,7 +222,6 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
                 // Add the first slider bar for controlling FPS
                 ImGui::SliderInt("FPS", fps, 0, 60);  // Range from 1 to 60 FPS
             }
-
 
             // Add the second slider bar for controlling y-scale
             ImGui::SliderFloat("Y-Scale", &yScale, 5.0f, 100.0f);  // Range from 10 to 1000
@@ -207,6 +250,8 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
 }
 
 void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System system) {
+    char filterBuffer[1024] = "";
+    std::pair<long long, long long> diskUsageInfo = GetDiskUsageOnWSL();
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
@@ -219,12 +264,22 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     ImGui::ProgressBar(system.memory_Buffer, ImVec2(-1, 0), "");
     ImGui::TextColored(ImVec4(1, 1, 1, 1), "Memory Swap: %d [%%]", (int)(system.memory_Swap * 100));
     ImGui::ProgressBar(system.memory_Swap, ImVec2(-1, 0), "");
+    // Parse the disk usage information and extract the usage percentage
+    float diskUsagePercentage = (float) (-1 * diskUsageInfo.second) / (float) (-1 * diskUsageInfo.first);
+    // Draw Disk Usage UI with a progress bar
+    ImGui::Text("Disk Usage: %.1f%%", diskUsagePercentage);
+    ImGui::ProgressBar(diskUsagePercentage / 100.0f, ImVec2(-1, 0));
+    ImGui::Text("Total Disk: %s %d", formatBytes(diskUsageInfo.second), diskUsageInfo.second);
+    ImGui::SameLine();
+    ImGui::Text("Used Disk: %s %d",  formatBytes(diskUsageInfo.first), diskUsageInfo.first);
+
+    int vectorsize = system.processes_.size();
+    ImGui::Text("Filter by the process name");
+    ImGui::InputText("Filter", filterBuffer, 1024);
 
     ImGui::Separator();
 
-    int vectorsize = system.processes_.size();
     ImGui::Columns(9, "CPU", true);
-
     ImGui::Text("PID");
     ImGui::NextColumn();
     ImGui::Text("PPID");
@@ -243,48 +298,54 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     ImGui::NextColumn();
     ImGui::Text("COMMAND");
     ImGui::NextColumn();
+
+    std::string filterString(filterBuffer);
     for (int i = vectorsize - 1; i >= 0; i--) {
-        if (system.processes_[i].Read_Cpu() > 0.01) {
-            ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%d", system.processes_[i].Read_Pid());
-            ImGui::NextColumn();
-            ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Parent().c_str());
-            ImGui::NextColumn();
-            ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Name().c_str());
-            ImGui::NextColumn();
-            ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_User().c_str());
-            ImGui::NextColumn();
-            ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%d", (int)(system.processes_[i].Read_Cpu() * 100));
-            ImGui::NextColumn();
-            ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Ram().c_str());
-            ImGui::NextColumn();
-            ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", Format::ElapsedTime(system.processes_[i].Read_Uptime()).c_str());
-            ImGui::NextColumn();
-            ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Status().c_str());
-            ImGui::NextColumn();
-            ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Command().c_str());
-            ImGui::NextColumn();
+        if (filterString.empty() || IsSubstring(system.processes_[i].Read_Name(), filterString)) {
+            if (system.processes_[i].Read_Cpu() > 0.01) {
+                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%d", system.processes_[i].Read_Pid());
+                ImGui::NextColumn();
+                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Parent().c_str());
+                ImGui::NextColumn();
+                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Name().c_str());
+                ImGui::NextColumn();
+                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_User().c_str());
+                ImGui::NextColumn();
+                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%d", (int)(system.processes_[i].Read_Cpu() * 100));
+                ImGui::NextColumn();
+                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Ram().c_str());
+                ImGui::NextColumn();
+                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", Format::ElapsedTime(system.processes_[i].Read_Uptime()).c_str());
+                ImGui::NextColumn();
+                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Status().c_str());
+                ImGui::NextColumn();
+                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Command().c_str());
+                ImGui::NextColumn();
+            }
         }
     }
     for (int i = vectorsize - 1; i >= 0; i--) {
-        if (system.processes_[i].Read_Cpu() < 0.01) {
-            ImGui::Text("%d", system.processes_[i].Read_Pid());
-            ImGui::NextColumn();
-            ImGui::Text("%s", system.processes_[i].Read_Parent().c_str());
-            ImGui::NextColumn();
-            ImGui::Text("%s", system.processes_[i].Read_Name().c_str());
-            ImGui::NextColumn();
-            ImGui::Text("%s", system.processes_[i].Read_User().c_str());
-            ImGui::NextColumn();
-            ImGui::Text("%d", (int)(system.processes_[i].Read_Cpu() * 100));
-            ImGui::NextColumn();
-            ImGui::Text("%s", system.processes_[i].Read_Ram().c_str());
-            ImGui::NextColumn();
-            ImGui::Text("%s", Format::ElapsedTime(system.processes_[i].Read_Uptime()).c_str());
-            ImGui::NextColumn();
-            ImGui::Text("%s", system.processes_[i].Read_Status().c_str());
-            ImGui::NextColumn();
-            ImGui::Text("%s", system.processes_[i].Read_Command().c_str());
-            ImGui::NextColumn();
+        if (filterString.empty() || IsSubstring(system.processes_[i].Read_Name(), filterString)) {
+            if (system.processes_[i].Read_Cpu() < 0.01) {
+                ImGui::Text("%d", system.processes_[i].Read_Pid());
+                ImGui::NextColumn();
+                ImGui::Text("%s", system.processes_[i].Read_Parent().c_str());
+                ImGui::NextColumn();
+                ImGui::Text("%s", system.processes_[i].Read_Name().c_str());
+                ImGui::NextColumn();
+                ImGui::Text("%s", system.processes_[i].Read_User().c_str());
+                ImGui::NextColumn();
+                ImGui::Text("%d", (int)(system.processes_[i].Read_Cpu() * 100));
+                ImGui::NextColumn();
+                ImGui::Text("%s", system.processes_[i].Read_Ram().c_str());
+                ImGui::NextColumn();
+                ImGui::Text("%s", Format::ElapsedTime(system.processes_[i].Read_Uptime()).c_str());
+                ImGui::NextColumn();
+                ImGui::Text("%s", system.processes_[i].Read_Status().c_str());
+                ImGui::NextColumn();
+                ImGui::Text("%s", system.processes_[i].Read_Command().c_str());
+                ImGui::NextColumn();
+            }
         }
     }
 
@@ -292,96 +353,110 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
 }
 
 void networkWindow(const char *id, ImVec2 size, ImVec2 position) {
-    std::vector<std::vector<long long>> networkStats = ReadNetworkStats();
+    std::vector<InterfaceStats> networkStats = ReadNetworkStats();
 
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
 
-    // Network interfaces table
-    ImGui::Text("Network IPv4");
-    for (const auto &stats : networkStats) {
-        std::string interfaceName = "Interface: " + std::to_string(stats[0]);
-        ImGui::Text("%s", interfaceName.c_str());
+    ImGui::Text("List of interfaces");
+    for (const auto &interface : networkStats) {
+        std::string interfaceName = interface.interfaceName;
 
-        ImGui::Columns(9, "network_stats_table");
-        ImGui::Text("RX");
-        ImGui::NextColumn();
-        ImGui::Text("TX");
-        ImGui::NextColumn();
-        ImGui::Separator();
+        if (ImGui::CollapsingHeader(interfaceName.c_str())) {
+            ImGui::Separator();
 
-        std::vector<std::string> rxLabels = {"Bytes", "Packets", "Errs", "Drop", "Fifo", "Frame", "Compressed", "Multicast"};
-        std::vector<std::string> txLabels = {"Bytes", "Packets", "Errs", "Drop", "Fifo", "Colls", "Carrier", "Compressed"};
+            ImGui::Columns(8, "network_stats_table");
 
-        for (int i = 0; i < 8; i++) {
-            ImGui::Text("%s", rxLabels[i].c_str());
-            ImGui::NextColumn();
-            ImGui::Text("%s", txLabels[i].c_str());
-            ImGui::NextColumn();
+            std::vector<std::string> rxLabels = {"Bytes", "Packets", "Errs", "Drop", "Fifo", "Frame", "Compressed", "Multicast"};
+
+            for (int i = 0; i < 8; i++) {
+                ImGui::Text("%s", rxLabels[i].c_str());
+                ImGui::NextColumn();
+            }
+
+            ImGui::Separator();
+
+            for (int i = 0; i < 8; i++) {
+                std::string rxValue = formatBytes(interface.stats[i]);
+
+                ImGui::Text("%s", rxValue.c_str());
+                ImGui::NextColumn();
+            }
+
+            ImGui::Separator();
+
+            ImGui::Columns(8, "network_stats_table");
+            std::vector<std::string> txLabels = {"Bytes", "Packets", "Errs", "Drop", "Fifo", "Colls", "Carrier", "Compressed"};
+
+            for (int i = 0; i < 8; i++) {
+                ImGui::Text("%s", txLabels[i].c_str());
+                ImGui::NextColumn();
+            }
+
+            ImGui::Separator();
+
+            for (int i = 0; i < 8; i++) {
+                std::string txValue = formatBytes(interface.stats[i + 8]);
+
+                ImGui::Text("%s", txValue.c_str());
+                ImGui::NextColumn();
+            }
+
+            ImGui::Separator();
+            ImGui::Columns(1);
         }
-
-        ImGui::Separator();
-
-        for (int i = 0; i < 8; i++) {
-            std::string rxValue = formatBytes(stats[i + 1]);
-            std::string txValue = formatBytes(stats[i + 9]);
-
-            ImGui::Text("%s", rxValue.c_str());
-            ImGui::NextColumn();
-            ImGui::Text("%s", txValue.c_str());
-            ImGui::NextColumn();
-        }
-
-        ImGui::Separator();
     }
 
-    ImGui::Columns(1);
+    if (ImGui::BeginTabBar("TabBar")) {
+        // RX section
+        if (ImGui::BeginTabItem("RX Section")) {
+            for (const auto &interface : networkStats) {
+                std::string interfaceName = interface.interfaceName + "RX";
+                if (ImGui::CollapsingHeader(interfaceName.c_str())) {
+                    long receivedBytes = interface.stats[0];
+                    long totalBytes = receivedBytes + interface.stats[8];
 
-    // RX section
-    ImGui::Separator();
-    ImGui::Text("RX Section");
+                    float rxProgress = calculateProgress(receivedBytes, totalBytes);
+                    std::string rxProgressLabel = "RX Progress##" + interface.interfaceName;
+                    ImGui::ProgressBar(rxProgress, ImVec2(-1, 0), rxProgressLabel.c_str());
 
-    for (const auto &stats : networkStats) {
-        std::string interfaceName = "Interface: " + std::to_string(stats[0]);
-        ImGui::Text("%s", interfaceName.c_str());
+                    std::string receivedBytesLabel = "Received: " + formatBytes(receivedBytes);
+                    std::string totalBytesLabel = "Total: " + formatBytes(totalBytes);
+                    ImGui::Text("%s", receivedBytesLabel.c_str());
+                    ImGui::SameLine();
+                    ImGui::Text("%s", totalBytesLabel.c_str());
 
-        long long receivedBytes = stats[1];
-        long long totalBytes = receivedBytes + stats[8];
+                    ImGui::Separator();
+                }
+            }
+            ImGui::EndTabItem();
+        }
 
-        float rxProgress = calculateProgress(receivedBytes, totalBytes);
-        std::string rxProgressLabel = "RX Progress##" + std::to_string(stats[0]);
-        ImGui::ProgressBar(rxProgress, ImVec2(-1, 0), rxProgressLabel.c_str());
+        // TX section
+        if (ImGui::BeginTabItem("TX Section")) {
+            for (const auto &interface : networkStats) {
+                std::string interfaceName = interface.interfaceName + "TX";
+                if (ImGui::CollapsingHeader(interfaceName.c_str())) {
+                    long transmittedBytes = interface.stats[8];
+                    long totalBytes = transmittedBytes + interface.stats[0];
 
-        std::string receivedBytesLabel = "Received: " + formatBytes(receivedBytes);
-        std::string totalBytesLabel = "Total: " + formatBytes(totalBytes);
-        ImGui::Text("%s", receivedBytesLabel.c_str());
-        ImGui::Text("%s", totalBytesLabel.c_str());
+                    float txProgress = calculateProgress(transmittedBytes, totalBytes);
+                    std::string txProgressLabel = "TX Progress##" + interface.interfaceName;
+                    ImGui::ProgressBar(txProgress, ImVec2(-1, 0), txProgressLabel.c_str());
 
-        ImGui::Separator();
-    }
+                    std::string transmittedBytesLabel = "Transmitted: " + formatBytes(transmittedBytes);
+                    std::string totalBytesLabel = "Total: " + formatBytes(totalBytes);
+                    ImGui::Text("%s", transmittedBytesLabel.c_str());
+                    ImGui::SameLine();
+                    ImGui::Text("%s", totalBytesLabel.c_str());
 
-    // TX section
-    ImGui::Separator();
-    ImGui::Text("TX Section");
-
-    for (const auto &stats : networkStats) {
-        std::string interfaceName = "Interface: " + std::to_string(stats[0]);
-        ImGui::Text("%s", interfaceName.c_str());
-
-        long long transmittedBytes = stats[9];
-        long long totalBytes = transmittedBytes + stats[16];
-
-        float txProgress = calculateProgress(transmittedBytes, totalBytes);
-        std::string txProgressLabel = "TX Progress##" + std::to_string(stats[0]);
-        ImGui::ProgressBar(txProgress, ImVec2(-1, 0), txProgressLabel.c_str());
-
-        std::string transmittedBytesLabel = "Transmitted: " + formatBytes(transmittedBytes);
-        std::string totalBytesLabel = "Total: " + formatBytes(totalBytes);
-        ImGui::Text("%s", transmittedBytesLabel.c_str());
-        ImGui::Text("%s", totalBytesLabel.c_str());
-
-        ImGui::Separator();
+                    ImGui::Separator();
+                }
+            }
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
     }
 
     ImGui::End();
