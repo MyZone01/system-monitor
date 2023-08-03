@@ -2,24 +2,25 @@
 #include <string>
 
 std::string GetFanStatusOnLinux() {
-    // Replace "/sys/class/hwmon/hwmonX/fanX_enable" with the correct path to the fan status file
-    std::ifstream statusFile("/sys/class/hwmon/hwmonX/fanX_enable");
+    // Replace "/sys/class/hwmon/hwmon1/fanX_enable" with the correct path to the fan status file
+    std::ifstream statusFile("/sys/class/hwmon/hwmon1/temp1_input");
     std::string status;
     statusFile >> status;
-    return status == "1" ? "Enabled" : "Disabled";
+    auto _status = atoi(status)
+    return _status >= 1 ? "Enabled" : "Disabled";
 }
 
 int GetFanSpeedOnLinux() {
-    // Replace "/sys/class/hwmon/hwmonX/fanX_input" with the correct path to the fan speed file
-    std::ifstream speedFile("/sys/class/hwmon/hwmonX/fanX_input");
+    // Replace "/sys/class/hwmon/hwmon1/fanX_input" with the correct path to the fan speed file
+    std::ifstream speedFile("/sys/class/hwmon/hwmon1/temp1_input");
     int speed;
     speedFile >> speed;
     return speed;
 }
 
 int GetFanLevelOnLinux() {
-    // Replace "/sys/class/hwmon/hwmonX/fanX_level" with the correct path to the fan level file
-    std::ifstream levelFile("/sys/class/hwmon/hwmonX/fanX_level");
+    // Replace "/sys/class/hwmon/hwmon1/fanX_level" with the correct path to the fan level file
+    std::ifstream levelFile("/sys/class/hwmon/hwmon1/temp1_input");
     int level;
     levelFile >> level;
     return level;
@@ -27,7 +28,7 @@ int GetFanLevelOnLinux() {
 
 float GetCPUTemperatureOnLinux() {
     // Replace "/sys/class/thermal/thermal_zoneX/temp" with the correct path to the CPU temperature file
-    std::ifstream tempFile("/sys/class/thermal/thermal_zoneX/temp");
+    std::ifstream tempFile("/sys/class/thermal/thermal_zone1/temp");
     int temp;
     tempFile >> temp;
     return static_cast<float>(temp) / 1000.0f; // Temperature in degrees Celsius
