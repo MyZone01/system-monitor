@@ -18,8 +18,6 @@
 #include "process.h"
 #include "processor.h"
 
-#define ESC_KEY 27
-
 std::vector<std::string> System::SysFileRead(std::string filename) {
     std::vector<std::string> words;
     std::string path = "/proc/" + filename;

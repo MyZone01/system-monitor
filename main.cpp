@@ -1,6 +1,7 @@
 #include <SDL.h>
 
 #include "header.h"
+#include "include/fan.h"
 
 #if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
 #include <GL/gl3w.h>
@@ -142,7 +143,7 @@ bool IsSubstring(const std::string &str, const std::string &substring) {
 // Function to fetch disk usage information for /dev/sdc on WSL
 std::pair<long long, long long> GetDiskUsageOnWSL() {
     // Open a pipe to run the 'df' command and read its output
-    FILE* pipe = popen("df -B1 /dev/sdc", "r");
+    FILE *pipe = popen("df -B1 /dev/sdc", "r");
     if (!pipe) {
         std::cerr << "Error opening pipe to df command." << std::endl;
         return std::make_pair(-1, -1);
@@ -181,6 +182,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
     std::string CPUName = system.cpu_.GetCPUType();
     std::string Hostname = system.Hostname();
     char *username = std::getenv("USER");
+    float level = GetBatteryLevel();
 
     // Variables to control FPS, y-scale, and animation stop
     static float yScale = 100.0f;  // Default y-scale is set to 100
@@ -243,6 +245,14 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
             ImGui::EndTabItem();
         }
 
+        // Power tab
+        if (ImGui::BeginTabItem("Power")) {
+            ImGui::ProgressBar(level, ImVec2(-1, 0), "");
+            ImGui::SameLine();
+            ImGui::Text("%d%%", level);
+            ImGui::EndTabItem();
+        }
+
         ImGui::EndTabBar();
     }
 
@@ -265,13 +275,13 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     ImGui::TextColored(ImVec4(1, 1, 1, 1), "Memory Swap: %d [%%]", (int)(system.memory_Swap * 100));
     ImGui::ProgressBar(system.memory_Swap, ImVec2(-1, 0), "");
     // Parse the disk usage information and extract the usage percentage
-    float diskUsagePercentage = (float) (-1 * diskUsageInfo.second) / (float) (-1 * diskUsageInfo.first);
+    float diskUsagePercentage = (float)(-1 * diskUsageInfo.second) / (float)(-1 * diskUsageInfo.first);
     // Draw Disk Usage UI with a progress bar
     ImGui::Text("Disk Usage: %.1f%%", diskUsagePercentage);
     ImGui::ProgressBar(diskUsagePercentage / 100.0f, ImVec2(-1, 0));
     ImGui::Text("Total Disk: %s %d", formatBytes(diskUsageInfo.second), diskUsageInfo.second);
     ImGui::SameLine();
-    ImGui::Text("Used Disk: %s %d",  formatBytes(diskUsageInfo.first), diskUsageInfo.first);
+    ImGui::Text("Used Disk: %s %d", formatBytes(diskUsageInfo.first), diskUsageInfo.first);
 
     int vectorsize = system.processes_.size();
     ImGui::Text("Filter by the process name");

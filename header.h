@@ -19,7 +19,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-
 #include <cstdio>
 #include <cmath>
 #include <ctime>
@@ -44,6 +43,7 @@
 #include "include/processor.h"
 #include "include/system.h"
 #include "include/updater.h"
+#include "include/fan.h"
 
 using namespace std;
 

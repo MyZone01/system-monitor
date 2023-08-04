@@ -55,6 +55,8 @@
         "ratio": "cpp",
         "set": "cpp",
         "iomanip": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "codecvt": "cpp",
+        "filesystem": "cpp"
     }
 }

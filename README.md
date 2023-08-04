@@ -78,7 +78,7 @@ $ tree system-monitor
     ![image](assets/mem.gif)
 
 +   [ ] **Network**, that will contain :
-    +   [x] The network ipv4, (`lo`, `wlp5s0` and other networks that the computer may have).
+    +   [ ] The network ipv4, (`lo`, `wlp5s0` and other networks that the computer may have).
     +   [x] A tab bar that should contain two tables :
     +   [x] `RX` (network receiver) containing the following data : bytes, packets, errs, drop, fifo, frame, compressed and multicast.
     +   [x] `TX` (network transmitter) containing the following data : bytes, packets, errs, drop, fifo, colls, carrier and compressed.
