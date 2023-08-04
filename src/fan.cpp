@@ -12,20 +12,12 @@ std::string GetFanStatusOnLinux() {
     return _status >= 1 ? "Enabled" : "Disabled";
 }
 
-int GetFanSpeedOnLinux() {
+float GetFanSpeedOnLinux() {
     // Replace "/sys/class/hwmon/hwmon1/fanX_input" with the correct path to the fan speed file
     std::ifstream speedFile("/sys/class/hwmon/hwmon1/temp1_input");
     int speed;
     speedFile >> speed;
-    return speed;
-}
-
-int GetFanLevelOnLinux() {
-    // Replace "/sys/class/hwmon/hwmon1/fanX_level" with the correct path to the fan level file
-    std::ifstream levelFile("/sys/class/hwmon/hwmon1/temp1_input");
-    int level;
-    levelFile >> level;
-    return level;
+    return static_cast<float>(speed);
 }
 
 float GetCPUTemperatureOnLinux() {

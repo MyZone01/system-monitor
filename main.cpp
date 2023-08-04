@@ -177,6 +177,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
     std::string Hostname = system.Hostname();
     char *username = std::getenv("USER");
     std::string level = GetBatteryLevel();
+    float speed = GetFanSpeedOnLinux();
 
     // Variables to control FPS, y-scale, and animation stop
     static float yScale = 100.0f;  // Default y-scale is set to 100
@@ -231,6 +232,8 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
 
         // Fan tab
         if (ImGui::BeginTabItem("Fan")) {
+            ImGui::ProgressBar(speed / 100000.0f, ImVec2(-1, 0), "");
+            ImGui::Text("%.f", speed / 100000.0f);
             ImGui::EndTabItem();
         }
 

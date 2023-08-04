@@ -5,7 +5,6 @@
 #include <string>
 
 std::string GetFanStatusOnLinux();
-int GetFanSpeedOnLinux();
-int GetFanLevelOnLinux();
+float GetFanSpeedOnLinux();
 float GetCPUTemperatureOnLinux();
 std::string  GetBatteryLevel();
