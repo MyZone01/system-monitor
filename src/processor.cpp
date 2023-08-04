@@ -15,8 +15,7 @@ std::vector<size_t> get_cpu_times() {
 
     proc_stat.ignore(5, ' ');
     std::vector<size_t> times;
-    for (size_t time; proc_stat >> time; times.push_back(time))
-        ;
+    for (size_t time; proc_stat >> time; times.push_back(time));
     return times;
 }
 

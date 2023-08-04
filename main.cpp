@@ -249,7 +249,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
             // Add the second slider bar for controlling y-scale
             ImGui::SliderFloat("Y-Scale Fan", &yScaleFan, 5.0f, 100.0f);  // Range from 10 to 1000
 
-            ImGui::PlotLines("", fan.fan_speed, IM_ARRAYSIZE(fan.fan_speed), 0, "", 0, yScaleFan, ImVec2(400, 200));
+            ImGui::PlotLines("", fan.fan_speed_log, IM_ARRAYSIZE(fan.fan_speed_log), 0, "", 0, yScaleFan, ImVec2(400, 200));
             ImGui::EndTabItem();
         }
 

@@ -7,10 +7,11 @@
 class Fan {
    public:
     Fan();
-    float fan_speed[30];
+    float fan_speed_log[30];
     std::string GetFanStatusOnLinux();
     float GetFanSpeedOnLinux();
     float GetCPUTemperatureOnLinux();
     std::string GetBatteryLevel();
+
    private:
 };

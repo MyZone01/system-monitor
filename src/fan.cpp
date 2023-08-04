@@ -1,5 +1,6 @@
 #include "fan.h"
 
+#include <iostream>
 #include <fstream>
 #include <string>
 
@@ -20,9 +21,10 @@ float Fan::GetFanSpeedOnLinux() {
     float speed = static_cast<float>(_speed);
 
     for (int i = 0; i < 29; i++) {
-        Fan::fan_speed[i] = Fan::fan_speed[i + 1];
+        Fan::fan_speed_log[i] = Fan::fan_speed_log[i + 1];
     }
-    Fan::fan_speed[29] = speed * 100;
+    Fan::fan_speed_log[29] = speed / 1000.0f;
+    // std::cout << fan_speed_log[29] << std::endl;
     return speed;
 }
 
