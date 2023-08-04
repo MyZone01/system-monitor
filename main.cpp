@@ -141,19 +141,32 @@ bool IsSubstring(const std::string &str, const std::string &substring) {
 }
 
 // Function to fetch disk usage information for /dev/sdc on WSL
-float GetDiskUsageOnWSL() {
+float GetDiskFree() {
     // Fetch Disk Usage information using statvfs
     struct statvfs stat;
     if (statvfs("/", &stat) == 0)
     {
-        unsigned long long totalSpace = stat.f_frsize * stat.f_blocks;
-        unsigned long long freeSpace = stat.f_frsize * stat.f_bfree;
-        return static_cast<float>(totalSpace - freeSpace) / totalSpace * 100.0f;
+        return static_cast<float>(stat.f_frsize * stat.f_bfree);
+        // return static_cast<float>(totalSpace - freeSpace) / totalSpace * 100.0f;
 
         // Draw Disk Usage UI
     }
     return 0.0f;
 }
+
+float GetDiskTotal() {
+    // Fetch Disk Usage information using statvfs
+    struct statvfs stat;
+    if (statvfs("/", &stat) == 0)
+    {
+        return static_cast<float>(stat.f_frsize * stat.f_blocks);
+        // return static_cast<float>(totalSpace - freeSpace) / totalSpace * 100.0f;
+
+        // Draw Disk Usage UI
+    }
+    return 0.0f;
+}
+
 
 void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system, int *fps) {
     const char *OS = getOsName();
@@ -241,7 +254,8 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
 
 void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System system) {
     char filterBuffer[1024] = "";
-    float diskUsage = GetDiskUsageOnWSL();
+    float totalSpace = GetDiskTotal();
+    float freeSpace = GetDiskFree();
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
@@ -255,8 +269,14 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     ImGui::TextColored(ImVec4(1, 1, 1, 1), "Memory Swap: %d [%%]", (int)(system.memory_Swap * 100));
     ImGui::ProgressBar(system.memory_Swap, ImVec2(-1, 0), "");
     // Parse the disk usage information and extract the usage percentage
+    float diskUsage = (totalSpace - freeSpace) / totalSpace * 100.0f;
     ImGui::Text("Disk Usage: %.1f%%", diskUsage);
     ImGui::ProgressBar(diskUsage / 100.0f, ImVec2(-1, 0), "");
+    auto _total = formatBytes((long)totalSpace);
+    auto _free = formatBytes((long)freeSpace);
+    ImGui::Text("Total: %s", _total.c_str());
+    ImGui::SameLine();
+    ImGui::Text("Free: %s", _free.c_str());
 
     int vectorsize = system.processes_.size();
     ImGui::Text("Filter by the process name");
