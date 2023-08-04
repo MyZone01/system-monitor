@@ -36,15 +36,10 @@ float GetCPUTemperatureOnLinux() {
     return static_cast<float>(temp) / 1000.0f;  // Temperature in degrees Celsius
 }
 
-float GetBatteryLevel() {
+std::string GetBatteryLevel() {
     std::string batteryPath = "/sys/class/power_supply/BAT1/capacity";  // Update the path based on your system
     std::ifstream file(batteryPath);
     std::string level;
-
-    if (file.is_open()) {
-        file >> level;
-        file.close();
-    }
-    float _level = (float)atoi(level.c_str());
-    return _level;
+    file >> level;
+    return level.c_str();
 }

@@ -8,4 +8,4 @@ std::string GetFanStatusOnLinux();
 int GetFanSpeedOnLinux();
 int GetFanLevelOnLinux();
 float GetCPUTemperatureOnLinux();
-float GetBatteryLevel();
+std::string  GetBatteryLevel();

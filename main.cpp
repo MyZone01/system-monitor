@@ -182,7 +182,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
     std::string CPUName = system.cpu_.GetCPUType();
     std::string Hostname = system.Hostname();
     char *username = std::getenv("USER");
-    float level = GetBatteryLevel();
+    std::string level = GetBatteryLevel();
 
     // Variables to control FPS, y-scale, and animation stop
     static float yScale = 100.0f;  // Default y-scale is set to 100
@@ -247,9 +247,8 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
 
         // Power tab
         if (ImGui::BeginTabItem("Power")) {
-            ImGui::ProgressBar(level, ImVec2(-1, 0), "");
-            ImGui::SameLine();
-            ImGui::Text("%d%%", level);
+            ImGui::ProgressBar((float)atoi(level.c_str()) / (float)100, ImVec2(-1, 0), "");
+            ImGui::Text("%s%%", level.c_str());
             ImGui::EndTabItem();
         }
 
