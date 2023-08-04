@@ -44,6 +44,18 @@ void Updater::CPUUpdater(System* system, int* targetFPS) {
     }
 }
 
+void Updater::FanSpeedUpdater(Fan* fan, int* targetFPS) {
+    while (true) {
+        int updateInterval = 1000;
+        if (*targetFPS > 0) {
+            updateInterval = 1000 / *targetFPS;
+            fan->GetFanSpeedOnLinux();
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval));
+    }
+}
+
 // void Updater::ProcessesUpdater(System* system, int* targetFPS) {
 //     // Keep track of the last update time using std::chrono::steady_clock
 //     std::chrono::steady_clock::time_point lastUpdate = std::chrono::steady_clock::now();

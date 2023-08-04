@@ -144,8 +144,7 @@ bool IsSubstring(const std::string &str, const std::string &substring) {
 float GetDiskFree() {
     // Fetch Disk Usage information using statvfs
     struct statvfs stat;
-    if (statvfs("/", &stat) == 0)
-    {
+    if (statvfs("/", &stat) == 0) {
         return static_cast<float>(stat.f_frsize * stat.f_bfree);
         // return static_cast<float>(totalSpace - usedSpace) / totalSpace * 100.0f;
 
@@ -157,8 +156,7 @@ float GetDiskFree() {
 float GetDiskTotal() {
     // Fetch Disk Usage information using statvfs
     struct statvfs stat;
-    if (statvfs("/", &stat) == 0)
-    {
+    if (statvfs("/", &stat) == 0) {
         return static_cast<float>(stat.f_frsize * stat.f_blocks);
         // return static_cast<float>(totalSpace - usedSpace) / totalSpace * 100.0f;
 
@@ -167,8 +165,7 @@ float GetDiskTotal() {
     return 0.0f;
 }
 
-
-void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system, int *fps) {
+void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system, Fan fan, int *CPUFPS, int *fanFPS) {
     const char *OS = getOsName();
     std::string Kernel = system.Kernel();
     int Cores = system.cpu_.CoreCount();
@@ -176,14 +173,16 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
     std::string CPUName = system.cpu_.GetCPUType();
     std::string Hostname = system.Hostname();
     char *username = std::getenv("USER");
-    std::string level = GetBatteryLevel();
-    float speed = GetFanSpeedOnLinux();
-    float thermal = GetCPUTemperatureOnLinux();
+    std::string level = fan.GetBatteryLevel();
+    float speed = fan.GetFanSpeedOnLinux();
+    float thermal = fan.GetCPUTemperatureOnLinux();
 
     // Variables to control FPS, y-scale, and animation stop
-    static float yScale = 100.0f;  // Default y-scale is set to 100
-    static bool animation = true;  // Default animation is not stopped
+    static float yScaleCPU = 100.0f;  // Default y-scale is set to 100
+    static bool animationCPU = true;  // Default animation is not stopped
     // static double lastFrameTime = 0.0;  // Variable to store the time of the last frame
+    static float yScaleFan = 100.0f;
+    static bool animationFan = true;
 
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
@@ -211,20 +210,20 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
             ImGui::ProgressBar(system.cpu5m / (float)Cores, ImVec2(-1, 0), "");
 
             // Add a checkbox to stop the animation
-            ImGui::Checkbox("Animation", &animation);
+            ImGui::Checkbox("Animation", &animationCPU);
 
             // Check if the animation is not stopped before rendering the plot
-            if (!animation) {
-                *fps = 0;
+            if (!animationCPU) {
+                *CPUFPS = 0;
             } else {
                 // Add the first slider bar for controlling FPS
-                ImGui::SliderInt("FPS", fps, 0, 60);  // Range from 1 to 60 FPS
+                ImGui::SliderInt("FPS CPU", CPUFPS, 0, 60);  // Range from 1 to 60 FPS
             }
 
             // Add the second slider bar for controlling y-scale
-            ImGui::SliderFloat("Y-Scale", &yScale, 5.0f, 100.0f);  // Range from 10 to 1000
+            ImGui::SliderFloat("Y-Scale CPU", &yScaleCPU, 5.0f, 100.0f);  // Range from 10 to 1000
 
-            ImGui::PlotLines("", system.cpu_.Cpu_Usage_Log, IM_ARRAYSIZE(system.cpu_.Cpu_Usage_Log), 0, "", 0, yScale, ImVec2(400, 200));
+            ImGui::PlotLines("", system.cpu_.Cpu_Usage_Log, IM_ARRAYSIZE(system.cpu_.Cpu_Usage_Log), 0, "", 0, yScaleCPU, ImVec2(400, 200));
             // ImGui::SameLine();
             // ImGui::PlotLines("", system.cpu_.Cpu_Usage_Log, IM_ARRAYSIZE(system.cpu_.Cpu_Usage_Log), 0, "", 0, 200, ImVec2(400, 200));
 
@@ -235,6 +234,22 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
         if (ImGui::BeginTabItem("Fan")) {
             ImGui::ProgressBar(speed / 100000.0f, ImVec2(-1, 0), "");
             ImGui::Text("%.f", speed / 1000.0f);
+
+            // Add a checkbox to stop the animation
+            ImGui::Checkbox("Animation", &animationFan);
+
+            // Check if the animation is not stopped before rendering the plot
+            if (!animationFan) {
+                *fanFPS = 0;
+            } else {
+                // Add the first slider bar for controlling FPS
+                ImGui::SliderInt("FPS Fan", fanFPS, 0, 60);  // Range from 1 to 60 FPS
+            }
+
+            // Add the second slider bar for controlling y-scale
+            ImGui::SliderFloat("Y-Scale Fan", &yScaleFan, 5.0f, 100.0f);  // Range from 10 to 1000
+
+            ImGui::PlotLines("", fan.fan_speed, IM_ARRAYSIZE(fan.fan_speed), 0, "", 0, yScaleFan, ImVec2(400, 200));
             ImGui::EndTabItem();
         }
 
@@ -534,8 +549,12 @@ int main(int, char **) {
 
     char overlay[32];
     System system;
-    static int fps = 30;  // Default FPS is set to 30
+    Fan fan;
+    static int fps = 30;   // Default FPS is set to 30
+    static int fps1 = 30;  // Default FPS is set to 30
 
+    std::thread Updater2(Updater::FanSpeedUpdater, &fan, &fps1);
+    Updater2.detach();
     std::thread Updater1(Updater::ProcessesUpdater, &system);
     Updater1.detach();
     std::thread Updater(Updater::CPUUpdater, &system, &fps);
@@ -564,7 +583,7 @@ int main(int, char **) {
 
             systemWindow("== System ==",
                          ImVec2((mainDisplay.x / 2) - 10, (mainDisplay.y / 2) + 30),
-                         ImVec2(10, 10), overlay, system, &fps);
+                         ImVec2(10, 10), overlay, system, fan, &fps, &fps1);
 
             networkWindow("== Network ==",
                           ImVec2(mainDisplay.x - 20, (mainDisplay.y / 2) - 60),

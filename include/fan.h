@@ -4,7 +4,13 @@
 #include <fstream>
 #include <string>
 
-std::string GetFanStatusOnLinux();
-float GetFanSpeedOnLinux();
-float GetCPUTemperatureOnLinux();
-std::string  GetBatteryLevel();
+class Fan {
+   public:
+    Fan();
+    float fan_speed[30];
+    std::string GetFanStatusOnLinux();
+    float GetFanSpeedOnLinux();
+    float GetCPUTemperatureOnLinux();
+    std::string GetBatteryLevel();
+   private:
+};

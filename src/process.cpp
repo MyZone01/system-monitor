@@ -161,30 +161,6 @@ void Process::Update() {
     }
 }
 
-void Process::Log(int cycles) {
-    std::string filename = "P_" + std::to_string(pid) + "_Log";
-    std::ofstream Log_file(filename.c_str(), std::ofstream::out);
-    int i = 0;
-    Log_file << "SyS Monitor Log File";
-    Log_file << "\n PID \t CPU[%%] \t TMEM[KB] \t TIME[s]";
-
-    while (i < cycles) {
-        Process::Update();
-        Log_file << "\n ";
-        Log_file << std::to_string(pid).c_str();
-        Log_file << "\t     ";
-        Log_file << std::to_string(Process::Read_Cpu() * 100).c_str();
-        Log_file << "\t     ";
-        Log_file << Process::Read_Ram().c_str();
-        Log_file << "\t     ";
-        Log_file << std::to_string(Process::Read_Uptime()).c_str();
-        Log_file << "\t";
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        i++;
-    }
-    std::terminate();
-}
-
 std::string Process::Read_Name() {
     return name;
 }
