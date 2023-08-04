@@ -234,13 +234,13 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
         // Fan tab
         if (ImGui::BeginTabItem("Fan")) {
             ImGui::ProgressBar(speed / 100000.0f, ImVec2(-1, 0), "");
-            ImGui::Text("%.f", speed / 100000.0f);
+            ImGui::Text("%.f", speed / 1000.0f);
             ImGui::EndTabItem();
         }
 
         // Thermal tab
         if (ImGui::BeginTabItem("Thermal")) {
-            ImGui::ProgressBar(thermal / 1000.0f, ImVec2(-1, 0), "");
+            ImGui::ProgressBar(thermal / 100000.0f, ImVec2(-1, 0), "");
             ImGui::Text("%.f", thermal / 1000.0f);
             ImGui::EndTabItem();
         }
