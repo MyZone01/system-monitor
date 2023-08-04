@@ -1,53 +1,28 @@
-#include <cstdio>
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
+#include <sys/statvfs.h>
 
-// Function to fetch disk usage information for /dev/sdc on WSL
-std::pair<long long, long long> GetDiskUsageOnWSL() {
-    // Open a pipe to run the 'df' command and read its output
-    FILE* pipe = popen("df -B1 /dev/sdc", "r");
-    if (!pipe) {
-        std::cerr << "Error opening pipe to df command." << std::endl;
-        return std::make_pair(-1, -1);
-    }
-
-    // Buffer to read the command output
-    char buffer[1024];
-
-    // Read the output line by line and parse the disk usage information
-    std::string diskInfo;
-    fgets(buffer, sizeof(buffer), pipe);
-    fgets(buffer, sizeof(buffer), pipe);
-    diskInfo = buffer;
-
-    // Close the pipe
-    pclose(pipe);
-
-    // Parse the disk usage information
-    std::istringstream iss(diskInfo);
-    std::string filesystem, size, used, avail, usePercent, mountedOn;
-    iss >> filesystem >> size >> used >> avail >> usePercent >> mountedOn;
-
-    // Convert the size and used values from strings to long long (in bytes)
-    long long sizeBytes, usedBytes;
-    sizeBytes = std::stoll(size);
-    usedBytes = std::stoll(used);
-
-    return std::make_pair(sizeBytes, usedBytes);
-}
-
-// Example usage
 int main() {
-    std::pair<long long, long long> diskUsageInfo = GetDiskUsageOnWSL();
+    struct statvfs buffer;
 
-    if (diskUsageInfo.first != -1 && diskUsageInfo.second != -1) {
-        // Print the size and used part of /dev/sdc in bytes
-        std::cout << "Size of /dev/sdc: " << diskUsageInfo.first << " bytes" << std::endl;
-        std::cout << "Used part of /dev/sdc: " << diskUsageInfo.second << " bytes" << std::endl;
+    // Replace "/" with the root path
+    const char* root_path = "/";
+
+    if (statvfs(root_path, &buffer) == 0) {
+        // Disk Size, Free Space, and Used Space in bytes
+        unsigned long long total_space = buffer.f_frsize * buffer.f_blocks;
+        unsigned long long free_space = buffer.f_frsize * buffer.f_bfree;
+        unsigned long long used_space = total_space - free_space;
+
+        // Calculate Disk Usage Percentage
+        double disk_usage_percentage = 100.0 * used_space / total_space;
+
+        std::cout << "Root Path: " << root_path << std::endl;
+        std::cout << "Total Disk Space: " << total_space << " bytes" << std::endl;
+        std::cout << "Used Disk Space: " << used_space << " bytes" << std::endl;
+        std::cout << "Free Disk Space: " << free_space << " bytes" << std::endl;
+        std::cout << "Disk Usage: " << disk_usage_percentage << "%" << std::endl;
     } else {
-        std::cout << "Error fetching disk usage information for /dev/sdc." << std::endl;
+        std::cerr << "Error getting disk information for path: " << root_path << std::endl;
     }
 
     return 0;

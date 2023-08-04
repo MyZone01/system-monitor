@@ -147,7 +147,7 @@ float GetDiskFree() {
     if (statvfs("/", &stat) == 0)
     {
         return static_cast<float>(stat.f_frsize * stat.f_bfree);
-        // return static_cast<float>(totalSpace - freeSpace) / totalSpace * 100.0f;
+        // return static_cast<float>(totalSpace - usedSpace) / totalSpace * 100.0f;
 
         // Draw Disk Usage UI
     }
@@ -160,7 +160,7 @@ float GetDiskTotal() {
     if (statvfs("/", &stat) == 0)
     {
         return static_cast<float>(stat.f_frsize * stat.f_blocks);
-        // return static_cast<float>(totalSpace - freeSpace) / totalSpace * 100.0f;
+        // return static_cast<float>(totalSpace - usedSpace) / totalSpace * 100.0f;
 
         // Draw Disk Usage UI
     }
@@ -261,7 +261,8 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
 void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System system) {
     char filterBuffer[1024] = "";
     float totalSpace = GetDiskTotal();
-    float freeSpace = GetDiskFree();
+    float usedSpace = GetDiskFree();
+    float freeSpace = totalSpace - usedSpace;
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
@@ -275,12 +276,15 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     ImGui::TextColored(ImVec4(1, 1, 1, 1), "Memory Swap: %d [%%]", (int)(system.memory_Swap * 100));
     ImGui::ProgressBar(system.memory_Swap, ImVec2(-1, 0), "");
     // Parse the disk usage information and extract the usage percentage
-    float diskUsage = (totalSpace - freeSpace) / totalSpace * 100.0f;
+    float diskUsage = usedSpace / totalSpace * 100.0f;
     ImGui::Text("Disk Usage: %.1f%%", diskUsage);
     ImGui::ProgressBar(diskUsage / 100.0f, ImVec2(-1, 0), "");
     auto _total = formatBytes((long)totalSpace);
+    auto _used = formatBytes((long)usedSpace);
     auto _free = formatBytes((long)freeSpace);
     ImGui::Text("Total: %s", _total.c_str());
+    ImGui::SameLine();
+    ImGui::Text("Used: %s", _used.c_str());
     ImGui::SameLine();
     ImGui::Text("Free: %s", _free.c_str());
 

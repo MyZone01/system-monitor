@@ -116,7 +116,7 @@ float System::MemorySwap() {
 int System::RunningProcesses() {
     int running_counter = 0;
     for (auto indx_process : processes_) {
-            running_counter++;
+        running_counter++;
     }
     return running_counter;
 }
