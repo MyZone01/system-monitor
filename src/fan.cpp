@@ -25,7 +25,7 @@ float GetCPUTemperatureOnLinux() {
     std::ifstream tempFile("/sys/class/thermal/thermal_zone1/temp");
     int temp;
     tempFile >> temp;
-    return static_cast<float>(temp) / 1000.0f;  // Temperature in degrees Celsius
+    return static_cast<float>(temp);  // Temperature in degrees Celsius
 }
 
 std::string GetBatteryLevel() {
