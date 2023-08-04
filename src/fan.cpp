@@ -31,13 +31,18 @@ float Fan::GetFanSpeedOnLinux() {
 float Fan::GetCPUTemperatureOnLinux() {
     // Replace "/sys/class/thermal/thermal_zoneX/temp" with the correct path to the CPU temperature file
     std::ifstream tempFile("/sys/class/thermal/thermal_zone6/temp");
-    int temp;
-    tempFile >> temp;
-    return static_cast<float>(temp);  // Temperature in degrees Celsius
+    int _temp;
+    tempFile >> _temp;
+    float temp = static_cast<float>(_temp);  // Temperature in degrees Celsius
+    for (int i = 0; i < 99; i++) {
+        Fan::temp_log[i] = Fan::temp_log[i + 1];
+    }
+    Fan::temp_log[99] = temp / 1000.0f;
+    return temp;
 }
 
 std::string Fan::GetBatteryLevel() {
-    std::string batteryPath = "/sys/class/power_supply/BAT1/capacity";  // Update the path based on your system
+    std::string batteryPath = "/sys/class/power_supply/BAT0/capacity";  // Update the path based on your system
     std::ifstream file(batteryPath);
     std::string level;
     file >> level;

@@ -47,3 +47,15 @@ void Updater::FanSpeedUpdater(Fan* fan, int* targetFPS) {
         std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval));
     }
 }
+
+void Updater::TemperatureUpdater(Fan* fan, int* targetFPS) {
+    while (true) {
+        int updateInterval = 1000;
+        if (*targetFPS > 0) {
+            updateInterval = 1000 / *targetFPS;
+            fan->GetCPUTemperatureOnLinux();
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval));
+    }
+}

@@ -165,7 +165,7 @@ float GetDiskTotal() {
     return 0.0f;
 }
 
-void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system, Fan fan, int *CPUFPS, int *fanFPS) {
+void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system, Fan fan, int *CPUFPS, int *fanFPS, int* tempFPS) {
     const char *OS = getOsName();
     std::string Kernel = system.Kernel();
     int Cores = system.cpu_.CoreCount();
@@ -182,7 +182,9 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
     static bool animationCPU = true;  // Default animation is not stopped
     // static double lastFrameTime = 0.0;  // Variable to store the time of the last frame
     static float yScaleFan = 100.0f;
+    static float yScaleTemp = 100.0f;
     static bool animationFan = true;
+    static bool animationTemp = true;
 
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
@@ -257,6 +259,23 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
         if (ImGui::BeginTabItem("Thermal")) {
             ImGui::ProgressBar(thermal / 100000.0f, ImVec2(-1, 0), "");
             ImGui::Text("%.f", thermal / 1000.0f);
+
+            // Add a checkbox to stop the animation
+            ImGui::Checkbox("Animation", &animationTemp);
+
+            // Check if the animation is not stopped before rendering the plot
+            if (!animationTemp) {
+                *tempFPS = 0;
+            } else {
+                // Add the first slider bar for controlling FPS
+                ImGui::SliderInt("FPS Temp", tempFPS, 0, 60);  // Range from 1 to 60 FPS
+            }
+
+            // Add the second slider bar for controlling y-scale
+            ImGui::SliderFloat("Y-Scale Temp", &yScaleTemp, 5.0f, 100.0f);  // Range from 10 to 1000
+
+            ImGui::PlotLines("", fan.fan_speed_log, 100, 0, "", 0, yScaleTemp, ImVec2(400, 200));
+
             ImGui::EndTabItem();
         }
 
@@ -552,7 +571,10 @@ int main(int, char **) {
     Fan fan;
     static int fps = 30;   // Default FPS is set to 30
     static int fps1 = 30;  // Default FPS is set to 30
+    static int fps2 = 30;  // Default FPS is set to 30
 
+    std::thread Updater3(Updater::TemperatureUpdater, &fan, &fps2);
+    Updater3.detach();
     std::thread Updater2(Updater::FanSpeedUpdater, &fan, &fps1);
     Updater2.detach();
     std::thread Updater1(Updater::ProcessesUpdater, &system);
@@ -583,7 +605,7 @@ int main(int, char **) {
 
             systemWindow("== System ==",
                          ImVec2((mainDisplay.x / 2) - 10, (mainDisplay.y / 2) + 30),
-                         ImVec2(10, 10), overlay, system, fan, &fps, &fps1);
+                         ImVec2(10, 10), overlay, system, fan, &fps, &fps1, &fps2);
 
             networkWindow("== Network ==",
                           ImVec2(mainDisplay.x - 20, (mainDisplay.y / 2) - 60),

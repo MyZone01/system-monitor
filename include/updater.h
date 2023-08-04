@@ -7,4 +7,5 @@ namespace Updater {
 void ProcessesUpdater(System *);
 void CPUUpdater(System *, int *);
 void FanSpeedUpdater(Fan *, int *);
+void TemperatureUpdater(Fan *, int *);
 }  // namespace Updater
