@@ -20,11 +20,11 @@ float Fan::GetFanSpeedOnLinux() {
     speedFile >> _speed;
     float speed = static_cast<float>(_speed);
 
-    for (int i = 0; i < 29; i++) {
+    for (int i = 0; i < 99; i++) {
         Fan::fan_speed_log[i] = Fan::fan_speed_log[i + 1];
     }
-    Fan::fan_speed_log[29] = speed / 1000.0f;
-    // std::cout << fan_speed_log[29] << std::endl;
+    Fan::fan_speed_log[99] = speed / 1000.0f;
+    // std::cout << fan_speed_log[99] << std::endl;
     return speed;
 }
 
