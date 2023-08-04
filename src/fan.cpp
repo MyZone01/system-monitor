@@ -15,9 +15,26 @@ std::string Fan::GetFanStatusOnLinux() {
 
 float Fan::GetFanSpeedOnLinux() {
     // Replace "/sys/class/hwmon/hwmon1/fanX_input" with the correct path to the fan speed file
-    std::ifstream speedFile("/sys/class/hwmon/hwmon1/temp1_input");
+    std::ifstream speedFile1("/sys/class/hwmon/hwmon1/temp1_input");
+    std::ifstream speedFile2("/sys/class/hwmon/hwmon2/ino0_input");
+    std::ifstream speedFile3("/sys/class/hwmon/hwmon3/temp1_input");
+    std::ifstream speedFile4("/sys/class/hwmon/hwmon4/pwm1_input");
+    std::ifstream speedFile5("/sys/class/hwmon/hwmon5/temp1_input");
+    std::ifstream speedFile6("/sys/class/hwmon/hwmon6/temp1_input");
     int _speed;
-    speedFile >> _speed;
+    int temp;
+    speedFile1 >> temp;
+    _speed += temp;
+    speedFile2 >> temp;
+    _speed += temp;
+    speedFile3 >> temp;
+    _speed += temp;
+    speedFile4 >> temp;
+    _speed += temp;
+    speedFile5 >> temp;
+    _speed += temp;
+    speedFile6 >> temp;
+    _speed += temp;
     float speed = static_cast<float>(_speed);
 
     for (int i = 0; i < 29; i++) {
