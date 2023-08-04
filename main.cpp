@@ -141,37 +141,18 @@ bool IsSubstring(const std::string &str, const std::string &substring) {
 }
 
 // Function to fetch disk usage information for /dev/sdc on WSL
-std::pair<long long, long long> GetDiskUsageOnWSL() {
-    // Open a pipe to run the 'df' command and read its output
-    FILE *pipe = popen("df -B1 /dev/sdc", "r");
-    if (!pipe) {
-        std::cerr << "Error opening pipe to df command." << std::endl;
-        return std::make_pair(-1, -1);
+float GetDiskUsageOnWSL() {
+    // Fetch Disk Usage information using statvfs
+    struct statvfs stat;
+    if (statvfs("/", &stat) == 0)
+    {
+        unsigned long long totalSpace = stat.f_frsize * stat.f_blocks;
+        unsigned long long freeSpace = stat.f_frsize * stat.f_bfree;
+        return static_cast<float>(totalSpace - freeSpace) / totalSpace * 100.0f;
+
+        // Draw Disk Usage UI
     }
-
-    // Buffer to read the command output
-    char buffer[1024];
-
-    // Read the output line by line and parse the disk usage information
-    std::string diskInfo;
-    fgets(buffer, sizeof(buffer), pipe);
-    fgets(buffer, sizeof(buffer), pipe);
-    diskInfo = buffer;
-
-    // Close the pipe
-    pclose(pipe);
-
-    // Parse the disk usage information
-    std::istringstream iss(diskInfo);
-    std::string filesystem, size, used, avail, usePercent, mountedOn;
-    iss >> filesystem >> size >> used >> avail >> usePercent >> mountedOn;
-
-    // Convert the size and used values from strings to long long (in bytes)
-    long long sizeBytes, usedBytes;
-    sizeBytes = std::stoll(size);
-    usedBytes = std::stoll(used);
-
-    return std::make_pair(sizeBytes, usedBytes);
+    return 0.0f;
 }
 
 void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system, int *fps) {
@@ -260,7 +241,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
 
 void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System system) {
     char filterBuffer[1024] = "";
-    std::pair<long long, long long> diskUsageInfo = GetDiskUsageOnWSL();
+    float diskUsage = GetDiskUsageOnWSL();
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
@@ -274,13 +255,8 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     ImGui::TextColored(ImVec4(1, 1, 1, 1), "Memory Swap: %d [%%]", (int)(system.memory_Swap * 100));
     ImGui::ProgressBar(system.memory_Swap, ImVec2(-1, 0), "");
     // Parse the disk usage information and extract the usage percentage
-    float diskUsagePercentage = (float)(-1 * diskUsageInfo.second) / (float)(-1 * diskUsageInfo.first);
-    // Draw Disk Usage UI with a progress bar
-    ImGui::Text("Disk Usage: %.1f%%", diskUsagePercentage);
-    ImGui::ProgressBar(diskUsagePercentage / 100.0f, ImVec2(-1, 0));
-    ImGui::Text("Total Disk: %s %d", formatBytes(diskUsageInfo.second), diskUsageInfo.second);
-    ImGui::SameLine();
-    ImGui::Text("Used Disk: %s %d", formatBytes(diskUsageInfo.first), diskUsageInfo.first);
+    ImGui::Text("Disk Usage: %.1f%%", diskUsage);
+    ImGui::ProgressBar(diskUsage / 100.0f, ImVec2(-1, 0), "");
 
     int vectorsize = system.processes_.size();
     ImGui::Text("Filter by the process name");
