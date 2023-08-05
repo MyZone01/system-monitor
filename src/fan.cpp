@@ -53,7 +53,6 @@ std::string Fan::GetBatteryLevel() {
     } 
     std::ifstream file(batteryPath);
     std::string level;
-    std::cout << level << std::endl;
     file >> level;
     return level.c_str();
 }
