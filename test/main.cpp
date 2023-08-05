@@ -1,33 +1,32 @@
-#include <netlink/route/addr.h>
-#include <netlink/route/link.h>
-#include <netlink/route/rtnl.h>
-#include <netlink/socket.h>
 #include <iostream>
+#include <string>
+#include <sstream>
+#include <iomanip>
+
+std::string formatBytes(long bytes) {
+    const char *units[] = {"B", "KB", "MB", "GB"};
+    int index = 0;
+
+    double value = static_cast<double>(bytes);
+    while (value >= 1024.0 && index < 3) {
+        value /= 1024.0;
+        index++;
+    }
+
+    std::stringstream ss;
+    ss << std::fixed << value << " " << units[index];
+
+    return ss.str();
+}
 
 int main() {
-    struct nl_sock* sock;
-    struct nl_cache* link_cache, *addr_cache;
-    struct nl_object* obj;
-    struct rtnl_addr* addr;
-    struct nl_addr* local_addr;
-
-    sock = nl_socket_alloc();
-    nl_connect(sock, NETLINK_ROUTE);
-
-    rtnl_link_alloc_cache(sock, AF_UNSPEC, &link_cache);
-    rtnl_addr_alloc_cache(sock, &addr_cache);
-
-    nl_cache_foreach(addr_cache, [](struct nl_object* obj, void* arg) {
-        struct rtnl_addr* addr = (struct rtnl_addr*)obj;
-        struct nl_addr* local_addr = rtnl_addr_get_local(addr);
-        char buf[INET6_ADDRSTRLEN];
-        nl_addr2str(local_addr, buf, sizeof(buf));
-        std::cout << "Address: " << buf << std::endl;
-    }, nullptr);
-
-    nl_cache_free(addr_cache);
-    nl_cache_free(link_cache);
-    nl_socket_free(sock);
+    std::cout << formatBytes((long)755738) << std::endl;
+    std::cout << formatBytes((long)452755738) << std::endl;
+    std::cout << formatBytes((long)1452755738) << std::endl;
 
     return 0;
 }
+
+// 452755738 bytes => 431.78 MB. // perfect
+// 452755738 bytes => 0.42 GB. // too small
+// 452755738 bytes => 442144.28.6 KB. // too big

@@ -30,7 +30,7 @@ float Fan::GetFanSpeedOnLinux() {
 
 float Fan::GetCPUTemperatureOnLinux() {
     // Replace "/sys/class/thermal/thermal_zoneX/temp" with the correct path to the CPU temperature file
-    std::ifstream tempFile("/sys/class/thermal/thermal_zone6/temp");
+    std::ifstream tempFile("/sys/class/thermal/thermal_zone0/temp");
     int _temp;
     tempFile >> _temp;
     float temp = static_cast<float>(_temp);  // Temperature in degrees Celsius

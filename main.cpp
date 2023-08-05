@@ -1,7 +1,6 @@
 #include <SDL.h>
 
 #include "header.h"
-#include "include/fan.h"
 
 #if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
 #include <GL/gl3w.h>
@@ -196,6 +195,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
     std::string CPUName = system.cpu_.GetCPUType();
     std::string Hostname = system.Hostname();
     char *username = std::getenv("USER");
+    std::string enabled = fan.GetFanStatusOnLinux();
     std::string level = fan.GetBatteryLevel();
     float speed = fan.GetFanSpeedOnLinux();
     float thermal = fan.GetCPUTemperatureOnLinux();
@@ -231,9 +231,6 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
             ImGui::Text("CPU Average 1 minute: %d [%%]", (int)(system.cpu1m / (float)Cores) * 100);
             ImGui::ProgressBar(system.cpu1m / (float)Cores, ImVec2(-1, 0), "");
 
-            ImGui::Text("CPU Average 5 minute: %d [%%]", (int)(system.cpu5m / (float)Cores) * 100);
-            ImGui::ProgressBar(system.cpu5m / (float)Cores, ImVec2(-1, 0), "");
-
             // Add a checkbox to stop the animation
             ImGui::Checkbox("Animation", &animationCPU);
 
@@ -257,6 +254,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
 
         // Fan tab
         if (ImGui::BeginTabItem("Fan")) {
+            ImGui::Text("Status: %s", enabled.c_str());
             ImGui::ProgressBar(speed / 100000.0f, ImVec2(-1, 0), "");
             ImGui::Text("%.f", speed / 1000.0f);
 
@@ -281,7 +279,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
         // Thermal tab
         if (ImGui::BeginTabItem("Thermal")) {
             ImGui::ProgressBar(thermal / 100000.0f, ImVec2(-1, 0), "");
-            ImGui::Text("%.f", thermal / 1000.0f);
+            ImGui::Text("%.2f °C", thermal / 1000.0f);
 
             // Add a checkbox to stop the animation
             ImGui::Checkbox("Animation", &animationTemp);
@@ -297,7 +295,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
             // Add the second slider bar for controlling y-scale
             ImGui::SliderFloat("Y-Scale Temp", &yScaleTemp, 5.0f, 100.0f);  // Range from 10 to 1000
 
-            ImGui::PlotLines("", fan.fan_speed_log, 100, 0, "", 0, yScaleTemp, ImVec2(400, 200));
+            ImGui::PlotLines("", fan.temp_log, 100, 0, "", 0, yScaleTemp, ImVec2(400, 200));
 
             ImGui::EndTabItem();
         }
@@ -318,8 +316,8 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
 void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System system) {
     char filterBuffer[1024] = "";
     float totalSpace = GetDiskTotal();
-    float usedSpace = GetDiskFree();
-    float freeSpace = totalSpace - usedSpace;
+    float freeSpace = GetDiskFree();
+    float usedSpace = totalSpace - freeSpace;
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
     ImGui::SetWindowPos(id, position);
