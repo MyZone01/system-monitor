@@ -41,7 +41,6 @@ std::string getIPAddress(const std::string &interfaceName) {
     strncpy(ifr.ifr_name, interfaceName.c_str(), IFNAMSIZ - 1);
 
     if (ioctl(fd, SIOCGIFADDR, &ifr) < 0) {
-        perror("ioctl");
         return "";
     }
 
