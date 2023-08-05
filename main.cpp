@@ -28,8 +28,28 @@ using namespace gl;
 // Define a structure to hold interface stats
 struct InterfaceStats {
     std::string interfaceName;
+    std::string ipAddress;
     std::vector<long long> stats;
 };
+
+std::string getIPAddress(const std::string &interfaceName) {
+    int fd;
+    struct ifreq ifr;
+
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, interfaceName.c_str(), IFNAMSIZ - 1);
+
+    if (ioctl(fd, SIOCGIFADDR, &ifr) < 0) {
+        perror("ioctl");
+        return "";
+    }
+
+    close(fd);
+
+    return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
+}
 
 std::vector<InterfaceStats> ReadNetworkStats() {
     std::ifstream file("/proc/net/dev");
@@ -46,14 +66,17 @@ std::vector<InterfaceStats> ReadNetworkStats() {
             std::vector<long long> interfaceStats;
 
             iss >> interface;
+            interface = interface.substr(0, interface.find_last_of(':')); 
             for (int i = 0; i < 16; i++) {
                 long long value;
                 iss >> value;
                 interfaceStats.push_back(value);
             }
 
+            std::string ipAddress = getIPAddress(interface);
+
             // Create an InterfaceStats object and add it to the vector
-            stats.push_back({interface, interfaceStats});
+            stats.push_back({interface, ipAddress, interfaceStats});
         }
 
         file.close();
@@ -431,8 +454,8 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position) {
     ImGui::Text("List of interfaces");
     for (const auto &interface : networkStats) {
         std::string interfaceName = interface.interfaceName;
-
-        if (ImGui::CollapsingHeader(interfaceName.c_str())) {
+        std::string label = interfaceName + ": " + interface.ipAddress;
+        if (ImGui::CollapsingHeader(label.c_str())) {
             ImGui::Separator();
 
             ImGui::Columns(8, "network_stats_table");

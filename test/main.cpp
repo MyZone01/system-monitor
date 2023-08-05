@@ -1,29 +1,33 @@
+#include <netlink/route/addr.h>
+#include <netlink/route/link.h>
+#include <netlink/route/rtnl.h>
+#include <netlink/socket.h>
 #include <iostream>
-#include <sys/statvfs.h>
 
 int main() {
-    struct statvfs buffer;
+    struct nl_sock* sock;
+    struct nl_cache* link_cache, *addr_cache;
+    struct nl_object* obj;
+    struct rtnl_addr* addr;
+    struct nl_addr* local_addr;
 
-    // Replace "/" with the root path
-    const char* root_path = "/";
+    sock = nl_socket_alloc();
+    nl_connect(sock, NETLINK_ROUTE);
 
-    if (statvfs(root_path, &buffer) == 0) {
-        // Disk Size, Free Space, and Used Space in bytes
-        unsigned long long total_space = buffer.f_frsize * buffer.f_blocks;
-        unsigned long long free_space = buffer.f_frsize * buffer.f_bfree;
-        unsigned long long used_space = total_space - free_space;
+    rtnl_link_alloc_cache(sock, AF_UNSPEC, &link_cache);
+    rtnl_addr_alloc_cache(sock, &addr_cache);
 
-        // Calculate Disk Usage Percentage
-        double disk_usage_percentage = 100.0 * used_space / total_space;
+    nl_cache_foreach(addr_cache, [](struct nl_object* obj, void* arg) {
+        struct rtnl_addr* addr = (struct rtnl_addr*)obj;
+        struct nl_addr* local_addr = rtnl_addr_get_local(addr);
+        char buf[INET6_ADDRSTRLEN];
+        nl_addr2str(local_addr, buf, sizeof(buf));
+        std::cout << "Address: " << buf << std::endl;
+    }, nullptr);
 
-        std::cout << "Root Path: " << root_path << std::endl;
-        std::cout << "Total Disk Space: " << total_space << " bytes" << std::endl;
-        std::cout << "Used Disk Space: " << used_space << " bytes" << std::endl;
-        std::cout << "Free Disk Space: " << free_space << " bytes" << std::endl;
-        std::cout << "Disk Usage: " << disk_usage_percentage << "%" << std::endl;
-    } else {
-        std::cerr << "Error getting disk information for path: " << root_path << std::endl;
-    }
+    nl_cache_free(addr_cache);
+    nl_cache_free(link_cache);
+    nl_socket_free(sock);
 
     return 0;
 }

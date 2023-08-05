@@ -18,6 +18,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 
 #include <cstdio>
 #include <cmath>
