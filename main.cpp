@@ -72,10 +72,7 @@ std::vector<InterfaceStats> ReadNetworkStats() {
                 interfaceStats.push_back(value);
             }
 
-            std::string ipAddress = "";
-            if (interface != "bond0" && interface != "dummy0" && interface != "sit0") {
-                std::string ipAddress = getIPAddress(interface);
-            }
+            std::string ipAddress = getIPAddress(interface);
 
             // Create an InterfaceStats object and add it to the vector
             stats.push_back({interface, ipAddress, interfaceStats});
