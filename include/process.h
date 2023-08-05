@@ -19,10 +19,13 @@ class Process {
     float Read_Cpu();
     long int Read_Uptime();
     void Log(int);
+    bool Exist();
+    bool* Selected();
 
    private:
     std::string name;
     int pid = 0;
+    bool selected = false;
     std::string ppid;
     std::string uid;
     float cpu = 0.0f;
@@ -34,7 +37,6 @@ class Process {
     float CpuUtilization();
     std::string ParentPid();
     long int UpTime();
-    bool Exist();
     std::string Name();
     std::string User();
     std::string Command();

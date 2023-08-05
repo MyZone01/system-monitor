@@ -56,36 +56,41 @@ unsigned short System::TotalProcesses() {
 }
 
 void System::Processes() {
-    int process_position = 0;
-    int process_number_at_runtime = System::TotalProcesses();
-    struct dirent *dirp;
-
-    processes_.resize(process_number_at_runtime);
-    std::string dir = std::string("/proc");
     std::vector<std::string> path_list;
     DIR *dp;
-    dp = opendir(dir.c_str());
+    dp = opendir("/proc");
 
-    while ((dirp = readdir(dp)) != NULL) {
+    while (struct dirent *dirp = readdir(dp)) {
         path_list.push_back(std::string(dirp->d_name));
     }
 
-    for (auto path : path_list) {
-        if (atoi(path.c_str()) > 0) {
-            int pid = atoi(path.c_str());
-            // temp_process.Update();
-            if (processes_[process_position].Read_Pid() != pid && process_position < process_number_at_runtime) {
-                Process temp_process;
-                temp_process.SetPid(pid);
-                temp_process.Update();
-                processes_[process_position] = temp_process;
+    for (const auto &path : path_list) {
+        int pid = atoi(path.c_str());
+        if (pid <= 0) continue;  // Skip non-process entries
+
+        // Check if the process with the same PID already exists in the vector
+        bool found = false;
+        for (auto process = processes_.begin(); process != processes_.end();) {
+            if (process->Exist()) {
+                if (process->Read_Pid() == pid) {
+                    found = true;
+                }
+                ++process;
+            } else {
+                process = processes_.erase(process);
             }
-            process_position++;
+        }
+
+        if (!found) {
+            // If the process with the given PID is not found, add it to the vector
+            Process temp_process;
+            temp_process.SetPid(pid);
+            temp_process.Update();
+            // std::cout << *temp_process.Selected() << std::endl;
+            processes_.push_back(temp_process);
         }
     }
-    if (process_position != process_number_at_runtime) {
-        processes_.resize(process_position);
-    }
+
     closedir(dp);
 }
 

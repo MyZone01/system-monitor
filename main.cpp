@@ -165,7 +165,7 @@ float GetDiskTotal() {
     return 0.0f;
 }
 
-void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system, Fan fan, int *CPUFPS, int *fanFPS, int* tempFPS) {
+void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system, Fan fan, int *CPUFPS, int *fanFPS, int *tempFPS) {
     const char *OS = getOsName();
     std::string Kernel = system.Kernel();
     int Cores = system.cpu_.CoreCount();
@@ -352,8 +352,15 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     for (int i = vectorsize - 1; i >= 0; i--) {
         if (filterString.empty() || IsSubstring(system.processes_[i].Read_Name(), filterString)) {
             if (system.processes_[i].Read_Cpu() > 0.01) {
-                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%d", system.processes_[i].Read_Pid());
+                // ImGui::Checkbox("", system.processes_[i].Selected());
+                std::string label = std::to_string(system.processes_[i].Read_Pid());
+                ImGui::Selectable(label.c_str(), system.processes_[i].Selected(), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap);
+                if (*system.processes_[i].Selected() == true) {
+                    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.3f, 0.5f, 1.0f, 1.0f));
+                }
                 ImGui::NextColumn();
+                // ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%d", system.processes_[i].Read_Pid());
+                // ImGui::NextColumn();
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Parent().c_str());
                 ImGui::NextColumn();
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Name().c_str());
@@ -370,14 +377,24 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
                 ImGui::NextColumn();
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Command().c_str());
                 ImGui::NextColumn();
+                if (*system.processes_[i].Selected() == true) {
+                    ImGui::PopStyleColor();
+                }
             }
         }
     }
     for (int i = vectorsize - 1; i >= 0; i--) {
         if (filterString.empty() || IsSubstring(system.processes_[i].Read_Name(), filterString)) {
             if (system.processes_[i].Read_Cpu() < 0.01) {
-                ImGui::Text("%d", system.processes_[i].Read_Pid());
+                // ImGui::Checkbox("", system.processes_[i].Selected());
+                std::string label = std::to_string(system.processes_[i].Read_Pid());
+                ImGui::Selectable(label.c_str(), system.processes_[i].Selected(), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap);
+                if (*system.processes_[i].Selected() == true) {
+                    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.3f, 0.5f, 1.0f, 1.0f));
+                }
                 ImGui::NextColumn();
+                // ImGui::Text("%d", system.processes_[i].Read_Pid());
+                // ImGui::NextColumn();
                 ImGui::Text("%s", system.processes_[i].Read_Parent().c_str());
                 ImGui::NextColumn();
                 ImGui::Text("%s", system.processes_[i].Read_Name().c_str());
@@ -394,6 +411,9 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
                 ImGui::NextColumn();
                 ImGui::Text("%s", system.processes_[i].Read_Command().c_str());
                 ImGui::NextColumn();
+                if (*system.processes_[i].Selected() == true) {
+                    ImGui::PopStyleColor();
+                }
             }
         }
     }
