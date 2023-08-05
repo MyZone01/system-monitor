@@ -1,21 +1,26 @@
 #include "fan.h"
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <string>
+#include <sys/stat.h>
+
+bool pathExists(const std::string& path) {
+    struct stat buffer;
+    return (stat(path.c_str(), &buffer) == 0);
+}
 
 std::string Fan::GetFanStatusOnLinux() {
     // Replace "/sys/class/hwmon/hwmon1/fanX_enable" with the correct path to the fan status file
-    std::ifstream statusFile("/sys/class/hwmon/hwmon1/temp1_input");
+    std::ifstream statusFile("/sys/class/hwmon/hwmon0/power/runtime_enabled");
     std::string status;
     statusFile >> status;
-    auto _status = atoi(status.c_str());
-    return _status >= 1 ? "Enabled" : "Disabled";
+    return status;
 }
 
 float Fan::GetFanSpeedOnLinux() {
     // Replace "/sys/class/hwmon/hwmon1/fanX_input" with the correct path to the fan speed file
-    std::ifstream speedFile("/sys/class/hwmon/hwmon1/temp1_input");
+    std::ifstream speedFile("/sys/class/hwmon/hwmon0/power/runtime_usage");
     int _speed;
     speedFile >> _speed;
     float speed = static_cast<float>(_speed);
@@ -43,8 +48,12 @@ float Fan::GetCPUTemperatureOnLinux() {
 
 std::string Fan::GetBatteryLevel() {
     std::string batteryPath = "/sys/class/power_supply/BAT0/capacity";  // Update the path based on your system
+    if (!pathExists(batteryPath)) {
+        batteryPath = "/sys/class/power_supply/BAT1/capacity";  // Update the path based on your system
+    } 
     std::ifstream file(batteryPath);
     std::string level;
+    std::cout << level << std::endl;
     file >> level;
     return level.c_str();
 }
