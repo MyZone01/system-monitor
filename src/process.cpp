@@ -143,10 +143,6 @@ bool Process::Exist() {
     return file_status;
 }
 
-bool& Process::Selected() {
-    return Process::selected;
-}
-
 void Process::Update() {
     if (Process::Exist()) {
         std::vector<std::string> words = Process::procFileRead("status");

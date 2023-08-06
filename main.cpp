@@ -271,8 +271,6 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
             ImGui::SliderFloat("Y-Scale CPU", &yScaleCPU, 5.0f, 100.0f);  // Range from 10 to 1000
 
             ImGui::PlotLines("", system.cpu_.Cpu_Usage_Log, IM_ARRAYSIZE(system.cpu_.Cpu_Usage_Log), 0, "", 0, yScaleCPU, ImVec2(400, 200));
-            // ImGui::SameLine();
-            // ImGui::PlotLines("", system.cpu_.Cpu_Usage_Log, IM_ARRAYSIZE(system.cpu_.Cpu_Usage_Log), 0, "", 0, 200, ImVec2(400, 200));
 
             ImGui::EndTabItem();
         }
@@ -338,7 +336,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
     ImGui::End();
 }
 
-void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System system) {
+void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System system, bool selectedProcess[]) {
     char filterBuffer[1024] = "";
     float totalSpace = GetDiskTotal();
     float freeSpace = GetDiskFree();
@@ -411,11 +409,10 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     for (int i = vectorsize - 1; i >= 0; i--) {
         if (filterString.empty() || IsSubstring(system.processes_[i].Read_Name(), filterString)) {
             if (system.processes_[i].Read_Cpu() > 0.01) {
-                std::string label = std::to_string(system.processes_[i].Read_Pid());
-                if (ImGui::Selectable(label.c_str(), system.processes_[i].Selected(), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap)) {
-                    system.processes_[i].Selected() = true;
-                } else {
-                    system.processes_[i].Selected() = false;
+                int processPID = system.processes_[i].Read_Pid();
+                std::string label = std::to_string(processPID);
+                if (ImGui::Selectable(label.c_str(), selectedProcess[processPID], ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap)) {
+                    selectedProcess[processPID] = !selectedProcess[processPID];
                 }
                 ImGui::NextColumn();
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Parent().c_str());
@@ -434,7 +431,7 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
                 ImGui::NextColumn();
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Command().c_str());
                 ImGui::NextColumn();
-                // if (*system.processes_[i].Selected() == true) {
+                // if (selectedProcess == true) {
                 //     ImGui::PopStyleColor();
                 // }
             }
@@ -443,11 +440,10 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     for (int i = vectorsize - 1; i >= 0; i--) {
         if (filterString.empty() || IsSubstring(system.processes_[i].Read_Name(), filterString)) {
             if (system.processes_[i].Read_Cpu() < 0.01) {
-                std::string label = std::to_string(system.processes_[i].Read_Pid());
-                if (ImGui::Selectable(label.c_str(), system.processes_[i].Selected(), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap)) {
-                    system.processes_[i].Selected() = true;
-                } else {
-                    system.processes_[i].Selected() = false;
+                int processPID = system.processes_[i].Read_Pid();
+                std::string label = std::to_string(processPID);
+                if (ImGui::Selectable(label.c_str(), selectedProcess[processPID], ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap)) {
+                    selectedProcess[processPID] = !selectedProcess[processPID];
                 }
                 ImGui::NextColumn();
                 ImGui::Text("%s", system.processes_[i].Read_Parent().c_str());
@@ -466,7 +462,7 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
                 ImGui::NextColumn();
                 ImGui::Text("%s", system.processes_[i].Read_Command().c_str());
                 ImGui::NextColumn();
-                // if (*system.processes_[i].Selected() == true) {
+                // if (selectedProcess == true) {
                 //     ImGui::PopStyleColor();
                 // }
             }
@@ -647,6 +643,12 @@ int main(int, char **) {
     static int fps = 30;   // Default FPS is set to 30
     static int fps1 = 30;  // Default FPS is set to 30
     static int fps2 = 30;  // Default FPS is set to 30
+    system.Processes();
+    bool selectedProcess[32768];
+
+    for (int i = 0; i < 32768; i++) {
+        selectedProcess[i] = false;
+    }
 
     std::thread Updater3(Updater::TemperatureUpdater, &fan, &fps2);
     Updater3.detach();
@@ -676,7 +678,7 @@ int main(int, char **) {
             ImVec2 mainDisplay = io.DisplaySize;
             memoryProcessesWindow("== Memory and Processes ==",
                                   ImVec2((mainDisplay.x / 2) - 20, (mainDisplay.y / 2) + 30),
-                                  ImVec2((mainDisplay.x / 2) + 10, 10), system);
+                                  ImVec2((mainDisplay.x / 2) + 10, 10), system, selectedProcess);
 
             systemWindow("== System ==",
                          ImVec2((mainDisplay.x / 2) - 10, (mainDisplay.y / 2) + 30),
