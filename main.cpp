@@ -95,7 +95,20 @@ std::string formatBytes(long bytes) {
     }
 
     std::stringstream ss;
-    ss << std::fixed << value << " " << units[index];
+
+    if (index == 0) {  // No need for decimals for Bytes
+        ss << static_cast<long>(value) << " " << units[index];
+    } else {
+        long wholePart = static_cast<long>(value);
+        long decimalPart = static_cast<long>((value - wholePart) * 100);  // Get two decimal places
+        ss << wholePart << ".";
+
+        if (decimalPart < 10) {
+            ss << "0";  // To ensure two decimal digits
+        }
+
+        ss << decimalPart << " " << units[index];
+    }
 
     return ss.str();
 }
@@ -167,6 +180,19 @@ float GetDiskFree() {
     struct statvfs stat;
     if (statvfs("/", &stat) == 0) {
         return static_cast<float>(stat.f_frsize * stat.f_bfree);
+        // return static_cast<float>(totalSpace - usedSpace) / totalSpace * 100.0f;
+
+        // Draw Disk Usage UI
+    }
+    return 0.0f;
+}
+
+// Function to fetch disk usage information for /dev/sdc on WSL
+float GetDiskAvailable() {
+    // Fetch Disk Usage information using statvfs
+    struct statvfs stat;
+    if (statvfs("/", &stat) == 0) {
+        return static_cast<float>(stat.f_frsize * stat.f_bavail);
         // return static_cast<float>(totalSpace - usedSpace) / totalSpace * 100.0f;
 
         // Draw Disk Usage UI
@@ -316,6 +342,7 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     char filterBuffer[1024] = "";
     float totalSpace = GetDiskTotal();
     float freeSpace = GetDiskFree();
+    float availableSpace = GetDiskAvailable();
     float usedSpace = totalSpace - freeSpace;
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
@@ -325,26 +352,39 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     ImGui::ProgressBar(system.memory_Utilization, ImVec2(-1, 0), "");
     ImGui::TextColored(ImVec4(1, 1, 1, 1), "Memory Shared: %d [%%]", (int)(system.memory_Shared * 100));
     ImGui::ProgressBar(system.memory_Shared, ImVec2(-1, 0), "");
-    ImGui::TextColored(ImVec4(1, 1, 1, 1), "Memory Buffer: %d [%%]", (int)(system.memory_Buffer * 100));
-    ImGui::ProgressBar(system.memory_Buffer, ImVec2(-1, 0), "");
     ImGui::TextColored(ImVec4(1, 1, 1, 1), "Memory Swap: %d [%%]", (int)(system.memory_Swap * 100));
     ImGui::ProgressBar(system.memory_Swap, ImVec2(-1, 0), "");
+    auto _totalRAM = formatBytes(system.MemoryTotal());
+    auto _totalSWAP = formatBytes(system.MemoryTotalSwap());
+    auto _freeRAM = formatBytes(system.MemoryFree());
+    auto _freeSWAP = formatBytes(system.MemoryFreeSwap());
+    ImGui::Text("Total RAM: %s", _totalRAM.c_str());
+    ImGui::SameLine();
+    ImGui::Text("Total SWAP: %s", _totalSWAP.c_str());
+    ImGui::SameLine();
+    ImGui::Text("Free RAM: %s", _freeRAM.c_str());
+    ImGui::SameLine();
+    ImGui::Text("Free SWAP: %s", _freeSWAP.c_str());
     // Parse the disk usage information and extract the usage percentage
     float diskUsage = usedSpace / totalSpace * 100.0f;
     ImGui::Text("Disk Usage: %.1f%%", diskUsage);
     ImGui::ProgressBar(diskUsage / 100.0f, ImVec2(-1, 0), "");
-    auto _total = formatBytes((long)totalSpace);
-    auto _used = formatBytes((long)usedSpace);
-    auto _free = formatBytes((long)freeSpace);
-    ImGui::Text("Total: %s", _total.c_str());
+    auto _totalDisk = formatBytes((long)totalSpace);
+    auto _usedDisk = formatBytes((long)usedSpace);
+    auto _freeDisk = formatBytes((long)freeSpace);
+    auto _availableDisk = formatBytes((long)availableSpace);
+    ImGui::Text("Total: %s", _totalDisk.c_str());
     ImGui::SameLine();
-    ImGui::Text("Used: %s", _used.c_str());
+    ImGui::Text("Used: %s", _usedDisk.c_str());
     ImGui::SameLine();
-    ImGui::Text("Free: %s", _free.c_str());
+    ImGui::Text("Available: %s", _availableDisk.c_str());
+    ImGui::SameLine();
+    ImGui::Text("Free: %s", _freeDisk.c_str());
 
     int vectorsize = system.processes_.size();
     ImGui::Text("Filter by the process name");
     ImGui::InputText("Filter", filterBuffer, 1024);
+    std::string filterString(filterBuffer);
 
     ImGui::Separator();
 
@@ -368,19 +408,16 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     ImGui::Text("COMMAND");
     ImGui::NextColumn();
 
-    std::string filterString(filterBuffer);
     for (int i = vectorsize - 1; i >= 0; i--) {
         if (filterString.empty() || IsSubstring(system.processes_[i].Read_Name(), filterString)) {
             if (system.processes_[i].Read_Cpu() > 0.01) {
-                // ImGui::Checkbox("", system.processes_[i].Selected());
                 std::string label = std::to_string(system.processes_[i].Read_Pid());
-                ImGui::Selectable(label.c_str(), system.processes_[i].Selected(), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap);
-                if (*system.processes_[i].Selected() == true) {
-                    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.3f, 0.5f, 1.0f, 1.0f));
+                if (ImGui::Selectable(label.c_str(), system.processes_[i].Selected(), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap)) {
+                    system.processes_[i].Selected() = true;
+                } else {
+                    system.processes_[i].Selected() = false;
                 }
                 ImGui::NextColumn();
-                // ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%d", system.processes_[i].Read_Pid());
-                // ImGui::NextColumn();
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Parent().c_str());
                 ImGui::NextColumn();
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Name().c_str());
@@ -397,24 +434,22 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
                 ImGui::NextColumn();
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Command().c_str());
                 ImGui::NextColumn();
-                if (*system.processes_[i].Selected() == true) {
-                    ImGui::PopStyleColor();
-                }
+                // if (*system.processes_[i].Selected() == true) {
+                //     ImGui::PopStyleColor();
+                // }
             }
         }
     }
     for (int i = vectorsize - 1; i >= 0; i--) {
         if (filterString.empty() || IsSubstring(system.processes_[i].Read_Name(), filterString)) {
             if (system.processes_[i].Read_Cpu() < 0.01) {
-                // ImGui::Checkbox("", system.processes_[i].Selected());
                 std::string label = std::to_string(system.processes_[i].Read_Pid());
-                ImGui::Selectable(label.c_str(), system.processes_[i].Selected(), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap);
-                if (*system.processes_[i].Selected() == true) {
-                    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.3f, 0.5f, 1.0f, 1.0f));
+                if (ImGui::Selectable(label.c_str(), system.processes_[i].Selected(), ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap)) {
+                    system.processes_[i].Selected() = true;
+                } else {
+                    system.processes_[i].Selected() = false;
                 }
                 ImGui::NextColumn();
-                // ImGui::Text("%d", system.processes_[i].Read_Pid());
-                // ImGui::NextColumn();
                 ImGui::Text("%s", system.processes_[i].Read_Parent().c_str());
                 ImGui::NextColumn();
                 ImGui::Text("%s", system.processes_[i].Read_Name().c_str());
@@ -431,9 +466,9 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
                 ImGui::NextColumn();
                 ImGui::Text("%s", system.processes_[i].Read_Command().c_str());
                 ImGui::NextColumn();
-                if (*system.processes_[i].Selected() == true) {
-                    ImGui::PopStyleColor();
-                }
+                // if (*system.processes_[i].Selected() == true) {
+                //     ImGui::PopStyleColor();
+                // }
             }
         }
     }
@@ -501,7 +536,7 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position) {
         // RX section
         if (ImGui::BeginTabItem("RX Section")) {
             for (const auto &interface : networkStats) {
-                std::string interfaceName = interface.interfaceName + "RX";
+                std::string interfaceName = interface.interfaceName + ": RX";
                 if (ImGui::CollapsingHeader(interfaceName.c_str())) {
                     long receivedBytes = interface.stats[0];
                     long totalBytes = receivedBytes + interface.stats[8];
@@ -525,7 +560,7 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position) {
         // TX section
         if (ImGui::BeginTabItem("TX Section")) {
             for (const auto &interface : networkStats) {
-                std::string interfaceName = interface.interfaceName + "TX";
+                std::string interfaceName = interface.interfaceName + ": TX";
                 if (ImGui::CollapsingHeader(interfaceName.c_str())) {
                     long transmittedBytes = interface.stats[8];
                     long totalBytes = transmittedBytes + interface.stats[0];

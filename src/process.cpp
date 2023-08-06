@@ -143,8 +143,8 @@ bool Process::Exist() {
     return file_status;
 }
 
-bool* Process::Selected() {
-    return &(Process::selected);
+bool& Process::Selected() {
+    return Process::selected;
 }
 
 void Process::Update() {

@@ -20,7 +20,7 @@ class Process {
     long int Read_Uptime();
     void Log(int);
     bool Exist();
-    bool* Selected();
+    bool& Selected();
 
    private:
     std::string name;

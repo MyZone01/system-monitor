@@ -1,12 +1,14 @@
 #include "updater.h"
 
 #include <chrono>
+#include <iostream>
 #include <thread>
 
 #include "system.h"
 
 void Updater::ProcessesUpdater(System* system) {
     while (true) {
+        std::cout << "###################Update########################" << std::endl;
         system->Processes();
         for (auto& proc : system->processes_) {
             proc.Update();
@@ -19,7 +21,8 @@ void Updater::ProcessesUpdater(System* system) {
         system->cpu1m = system->cpu_.CpuMean1m();
         system->cpu5m = system->cpu_.CpuMean5m();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+        std::cout << "###################END########################" << std::endl;
     }
 }
 

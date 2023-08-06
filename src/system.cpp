@@ -86,7 +86,6 @@ void System::Processes() {
             Process temp_process;
             temp_process.SetPid(pid);
             temp_process.Update();
-            // std::cout << *temp_process.Selected() << std::endl;
             processes_.push_back(temp_process);
         }
     }
@@ -98,6 +97,18 @@ float System::MemoryUtilization() {
     struct sysinfo info;
     sysinfo(&info);
     return ((float)info.totalram - (float)info.freeram) / (float)info.totalram;
+}
+
+long System::MemoryTotal() {
+    struct sysinfo info;
+    sysinfo(&info);
+    return info.totalram;
+}
+
+long System::MemoryFree() {
+    struct sysinfo info;
+    sysinfo(&info);
+    return info.freeram;
 }
 
 float System::MemoryBuffer() {
@@ -116,6 +127,18 @@ float System::MemorySwap() {
     struct sysinfo info;
     sysinfo(&info);
     return ((float)info.totalswap - (float)info.freeswap) / (float)info.totalswap;
+}
+
+long System::MemoryTotalSwap() {
+    struct sysinfo info;
+    sysinfo(&info);
+    return info.totalswap;
+}
+
+long System::MemoryFreeSwap() {
+    struct sysinfo info;
+    sysinfo(&info);
+    return info.freeswap;
 }
 
 int System::RunningProcesses() {

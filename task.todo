@@ -75,3 +75,7 @@
         +   [x] Columns
             +   [x] NextColumn
             +   [x] Separator
++   [x] Total RAM
++   [x] Free RAM
++   [x] Swap RAM
++   [x] Disk Usage

@@ -18,6 +18,10 @@ class System {
     float MemorySwap();
     float MemoryShared();
     float MemoryBuffer();
+    long MemoryTotal();
+    long MemoryFree();
+    long MemoryTotalSwap();
+    long MemoryFreeSwap();
 
     long UpTime();
     int RunningProcesses();
