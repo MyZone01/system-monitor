@@ -5,6 +5,8 @@ For the GUI you will use the [_Dear ImGui_](https://github.com/ocornut/imgui/wik
 
 ##  USAGE
 ```sh
+$ sudo apt install libsdl2-dev
+$ make setup
 $ make
 $ ./build/monitor
 ```
@@ -58,7 +60,7 @@ $ tree system-monitor
     +   [x] Additionally, it should also have two slider bars. The first slider bar should be able to control the `FPS` of the graph, and the second slider bar should control the `y` scale of the graph.
     +   [x] `CPU` should present this graph with an overlay text saying the current percentage of the CPU.
     +   [ ] `Fan`, should include the following information, the status of the fan, (enable/active), the current speed and the level. And should also present the graph stated above.
-    +   [ ] `Thermal`, should present the graph stated above with an overlay text saying the current temperature of the computer (usually the cpu sensor). 
+    +   [x] `Thermal`, should present the graph stated above with an overlay text saying the current temperature of the computer (usually the cpu sensor). 
 
     ![image](assets/system.gif)
 
@@ -73,7 +75,7 @@ $ tree system-monitor
     +   [x] **CPU usage**, how much CPU the process is using in percentage.
     +   [x] **Memory usage**, how much memory the process is using in percentage.
     +   [x] A text box that lets the user filter the table.
-    +   [ ] Users must be able to select multiple rows of the table.
+    +   [x] **Users must be able to select multiple rows of the table.**
 
     ![image](assets/mem.gif)
 
