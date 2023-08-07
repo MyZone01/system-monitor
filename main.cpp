@@ -257,9 +257,6 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
             ImGui::Text("CPU Average 1 minute: %d [%%]", (int)(system.cpu1m / (float)Cores) * 100);
             ImGui::ProgressBar(system.cpu1m / (float)Cores, ImVec2(-1, 0), "");
 
-            ImGui::Text("CPU Average 5 minute: %d [%%]", (int)(system.cpu5m / (float)Cores) * 100);
-            ImGui::ProgressBar(system.cpu5m / (float)Cores, ImVec2(-1, 0), "");
-
             // Add a checkbox to stop the animation
             ImGui::Checkbox("Animation", &animationCPU);
 
