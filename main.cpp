@@ -256,6 +256,9 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
             ImGui::Text("CPU Average 1 minute: %d [%%]", (int)(system.cpu1m / (float)Cores) * 100);
             ImGui::ProgressBar(system.cpu1m / (float)Cores, ImVec2(-1, 0), "");
 
+            ImGui::Text("CPU Average 5 minute: %d [%%]", (int)(system.cpu5m / (float)Cores) * 100);
+            ImGui::ProgressBar(system.cpu5m / (float)Cores, ImVec2(-1, 0), "");
+
             // Add a checkbox to stop the animation
             ImGui::Checkbox("Animation", &animationCPU);
 
@@ -643,7 +646,6 @@ int main(int, char **) {
     static int fps = 30;   // Default FPS is set to 30
     static int fps1 = 30;  // Default FPS is set to 30
     static int fps2 = 30;  // Default FPS is set to 30
-    system.Processes();
     bool selectedProcess[32768];
 
     for (int i = 0; i < 32768; i++) {

@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <fstream>
+#include <sstream>
 #include <iostream>
 #include <set>
 #include <string>
@@ -93,10 +94,47 @@ void System::Processes() {
     closedir(dp);
 }
 
+// float System::MemoryUtilization() {
+//     struct sysinfo info;
+//     sysinfo(&info);
+//     return ((float)info.totalram - (float)info.freeram) / (float)info.totalram;
+// }
+
 float System::MemoryUtilization() {
-    struct sysinfo info;
-    sysinfo(&info);
-    return ((float)info.totalram - (float)info.freeram) / (float)info.totalram;
+    long totalram = 0;
+    long freeram = 0;
+    long availram = 0;
+
+    std::ifstream meminfoFile("/proc/meminfo");
+    if (!meminfoFile.is_open()) {
+        std::cerr << "Failed to open /proc/meminfo" << std::endl;
+        return -1.0; // Return a negative value to indicate an error
+    }
+
+    std::string line;
+    while (std::getline(meminfoFile, line)) {
+        std::istringstream iss(line);
+        std::string key;
+        long value;
+
+        if (iss >> key >> value) {
+            if (key == "MemTotal:") {
+                totalram = value;
+            } else if (key == "MemFree:") {
+                freeram = value;
+            } else if (key == "MemAvailable:") {
+                availram = value;
+            }
+        }
+    }
+
+    meminfoFile.close();
+
+    if (totalram > 0) {
+        return static_cast<float>(totalram - availram) / static_cast<float>(totalram);
+    } else {
+        return -1.0; // Return a negative value to indicate an error
+    }
 }
 
 long System::MemoryTotal() {
