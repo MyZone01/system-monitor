@@ -1,44 +1,70 @@
 #include <iostream>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
+#include <fstream>
+#include <string>
 
 int main() {
-    FILE* file = popen("df --output=size,used,avail /", "r");
-    if (!file) {
-        std::cerr << "Failed to run df command" << std::endl;
+    std::ifstream fanFile("/proc/acpi/ibm/fan");
+    if (!fanFile.is_open()) {
+        std::cerr << "Failed to open /proc/acpi/ibm/fan" << std::endl;
         return 1;
     }
 
-    // We assume each line is less than 256 characters.
-    char line[256];
-
-    // Read header
-    if (!fgets(line, sizeof(line), file)) {
-        std::cerr << "Failed to read df output" << std::endl;
-        return 1;
+    std::string line;
+    while (std::getline(fanFile, line)) {
+        if (line.find("status:") != std::string::npos) {
+            std::cout << "Status: " << line.substr(8) << std::endl;
+        } else if (line.find("level:") != std::string::npos) {
+            std::cout << "Level: " << line.substr(7) << std::endl;
+        } else if (line.find("speed:") != std::string::npos) {
+            std::cout << "Speed: " << line.substr(7) << std::endl;
+        }
     }
 
-    // Read values
-    if (!fgets(line, sizeof(line), file)) {
-        std::cerr << "Failed to read df output" << std::endl;
-        return 1;
-    }
-
-    unsigned long long totalSpace, usedSpace, availSpace;
-    sscanf(line, "%llu %llu %llu", &totalSpace, &usedSpace, &availSpace);
-
-    // Calculate percentages
-    double usedPercent = static_cast<double>(usedSpace) / totalSpace * 100.0;
-    double availPercent = static_cast<double>(availSpace) / totalSpace * 100.0;
-
-    // Print results
-    std::cout << "Total space: " << totalSpace * 1024 << " Bytes" << std::endl; // assuming df returns values in 1K-blocks
-    std::cout << "Used space: " << usedSpace * 1024 << " Bytes (" << usedPercent << "%)" << std::endl;
-    std::cout << "Available space: " << availSpace * 1024 << " Bytes (" << availPercent << "%)" << std::endl;
-
-    pclose(file);
+    fanFile.close();
     return 0;
+}
+
+// #include <iostream>
+// #include <cstdio>
+// #include <cstdlib>
+// #include <cstring>
+
+// int main() {
+//     FILE* file = popen("df --output=size,used,avail /", "r");
+//     if (!file) {
+//         std::cerr << "Failed to run df command" << std::endl;
+//         return 1;
+//     }
+
+//     // We assume each line is less than 256 characters.
+//     char line[256];
+
+//     // Read header
+//     if (!fgets(line, sizeof(line), file)) {
+//         std::cerr << "Failed to read df output" << std::endl;
+//         return 1;
+//     }
+
+//     // Read values
+//     if (!fgets(line, sizeof(line), file)) {
+//         std::cerr << "Failed to read df output" << std::endl;
+//         return 1;
+//     }
+
+//     unsigned long long totalSpace, usedSpace, availSpace;
+//     sscanf(line, "%llu %llu %llu", &totalSpace, &usedSpace, &availSpace);
+
+//     // Calculate percentages
+//     double usedPercent = static_cast<double>(usedSpace) / totalSpace * 100.0;
+//     double availPercent = static_cast<double>(availSpace) / totalSpace * 100.0;
+
+//     // Print results
+//     std::cout << "Total space: " << totalSpace * 1024 << " Bytes" << std::endl; // assuming df returns values in 1K-blocks
+//     std::cout << "Used space: " << usedSpace * 1024 << " Bytes (" << usedPercent << "%)" << std::endl;
+//     std::cout << "Available space: " << availSpace * 1024 << " Bytes (" << availPercent << "%)" << std::endl;
+
+//     pclose(file);
+//     return 0;
 }
 
 // #include <iostream>
