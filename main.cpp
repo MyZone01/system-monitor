@@ -221,6 +221,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
     std::string Hostname = system.Hostname();
     char *username = std::getenv("USER");
     std::string enabled = fan.GetFanStatusOnLinux();
+    std::string fanLevel = fan.GetFanLevelOnLinux();
     std::string level = fan.GetBatteryLevel();
     float speed = fan.GetFanSpeedOnLinux();
     float thermal = fan.GetCPUTemperatureOnLinux();
@@ -278,6 +279,7 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
         // Fan tab
         if (ImGui::BeginTabItem("Fan")) {
             ImGui::Text("Status: %s", enabled.c_str());
+            ImGui::Text("Level: %s", fanLevel.c_str());
             ImGui::ProgressBar(speed / 100000.0f, ImVec2(-1, 0), "");
             ImGui::Text("%.f", speed / 1000.0f);
 

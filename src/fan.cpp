@@ -12,18 +12,35 @@ bool pathExists(const std::string& path) {
 
 std::string Fan::GetFanStatusOnLinux() {
     // Replace "/sys/class/hwmon/hwmon1/fanX_enable" with the correct path to the fan status file
-    std::ifstream statusFile("/sys/class/hwmon/hwmon0/power/runtime_enabled");
+    std::ifstream fanFile("/proc/acpi/ibm/fan");
     std::string status;
-    statusFile >> status;
+    fanFile >> status;
+    fanFile >> status;
     return status;
+}
+
+std::string Fan::GetFanLevelOnLinux() {
+    // Replace "/sys/class/hwmon/hwmon1/fanX_enable" with the correct path to the fan status file
+    std::ifstream fanFile("/proc/acpi/ibm/fan");
+    std::string level;
+    fanFile >> level;
+    fanFile >> level;
+    fanFile >> level;
+    fanFile >> level;
+    fanFile >> level;
+    fanFile >> level;
+    return level;
 }
 
 float Fan::GetFanSpeedOnLinux() {
     // Replace "/sys/class/hwmon/hwmon1/fanX_input" with the correct path to the fan speed file
-    std::ifstream speedFile("/sys/class/hwmon/hwmon0/power/runtime_usage");
-    int _speed;
-    speedFile >> _speed;
-    float speed = static_cast<float>(_speed);
+    std::ifstream fanFile("/proc/acpi/ibm/fan");
+    std::string _speed;
+    fanFile >> _speed;
+    fanFile >> _speed;
+    fanFile >> _speed;
+    fanFile >> _speed;
+    float speed = static_cast<float>(atoi(_speed.c_str()));
 
     for (int i = 0; i < 99; i++) {
         Fan::fan_speed_log[i] = Fan::fan_speed_log[i + 1];

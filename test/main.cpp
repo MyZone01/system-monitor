@@ -9,16 +9,27 @@ int main() {
         return 1;
     }
 
-    std::string line;
-    while (std::getline(fanFile, line)) {
-        if (line.find("status:") != std::string::npos) {
-            std::cout << "Status: " << line.substr(8) << std::endl;
-        } else if (line.find("level:") != std::string::npos) {
-            std::cout << "Level: " << line.substr(7) << std::endl;
-        } else if (line.find("speed:") != std::string::npos) {
-            std::cout << "Speed: " << line.substr(7) << std::endl;
-        }
-    }
+    std::string _speed;
+    fanFile >> _speed;
+    fanFile >> _speed;
+    fanFile >> _speed;
+    fanFile >> _speed;
+    // fanFile >> _speed;
+
+    int speed = atoi(_speed.c_str());
+
+    std::cout << speed << std::endl;
+
+    // std::string line;
+    // while (std::getline(fanFile, line)) {
+    //     if (line.find("status:") != std::string::npos) {
+    //         std::cout << "Status: " << line.substr(9) << std::endl;
+    //     } else if (line.find("level:") != std::string::npos) {
+    //         std::cout << "Level: " << line.substr(8) << std::endl;
+    //     } else if (line.find("speed:") != std::string::npos) {
+    //         std::cout << "Speed: " << line.substr(8) << std::endl;
+    //     }
+    // }
 
     fanFile.close();
     return 0;
@@ -65,7 +76,7 @@ int main() {
 
 //     pclose(file);
 //     return 0;
-}
+// }
 
 // #include <iostream>
 // #include <sys/types.h>
