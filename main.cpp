@@ -152,68 +152,12 @@ float GetCPUUsage() {
     return usage;
 }
 
-const char *getOsName() {
-#ifdef _WIN32
-    return "Windows 32-bit";
-#elif _WIN64
-    return "Windows 64-bit";
-#elif __APPLE__ || __MACH__
-    return "Mac OSX";
-#elif __linux__
-    return "Linux";
-#elif __FreeBSD__
-    return "FreeBSD";
-#elif __unix || __unix__
-    return "Unix";
-#else
-    return "Other";
-#endif
-}
-
 bool IsSubstring(const std::string &str, const std::string &substring) {
     return str.find(substring) != std::string::npos;
 }
 
-// Function to fetch disk usage information for /dev/sdc on WSL
-float GetDiskFree() {
-    // Fetch Disk Usage information using statvfs
-    struct statvfs stat;
-    if (statvfs("/", &stat) == 0) {
-        return static_cast<float>(stat.f_frsize * stat.f_bfree);
-        // return static_cast<float>(totalSpace - usedSpace) / totalSpace * 100.0f;
-
-        // Draw Disk Usage UI
-    }
-    return 0.0f;
-}
-
-// Function to fetch disk usage information for /dev/sdc on WSL
-float GetDiskAvailable() {
-    // Fetch Disk Usage information using statvfs
-    struct statvfs stat;
-    if (statvfs("/", &stat) == 0) {
-        return static_cast<float>(stat.f_frsize * stat.f_bavail);
-        // return static_cast<float>(totalSpace - usedSpace) / totalSpace * 100.0f;
-
-        // Draw Disk Usage UI
-    }
-    return 0.0f;
-}
-
-float GetDiskTotal() {
-    // Fetch Disk Usage information using statvfs
-    struct statvfs stat;
-    if (statvfs("/", &stat) == 0) {
-        return static_cast<float>(stat.f_frsize * stat.f_blocks);
-        // return static_cast<float>(totalSpace - usedSpace) / totalSpace * 100.0f;
-
-        // Draw Disk Usage UI
-    }
-    return 0.0f;
-}
-
 void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32], System system, Fan fan, int *CPUFPS, int *fanFPS, int *tempFPS) {
-    const char *OS = getOsName();
+    const char *OS = system.GetOsName();
     std::string Kernel = system.Kernel();
     int Cores = system.cpu_.CoreCount();
     unsigned short NumberProcess = system.RunningProcesses();
@@ -343,9 +287,9 @@ void systemWindow(const char *id, ImVec2 size, ImVec2 position, char overlay[32]
 
 void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System system, bool selectedProcess[]) {
     char filterBuffer[1024] = "";
-    float totalSpace = GetDiskTotal();
-    float freeSpace = GetDiskFree();
-    float availableSpace = GetDiskAvailable();
+    float totalSpace = system.GetDiskTotal();
+    float freeSpace = system.GetDiskFree();
+    float availableSpace = system.GetDiskAvailable();
     float usedSpace = totalSpace - freeSpace;
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);

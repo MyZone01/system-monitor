@@ -11,7 +11,7 @@ class System {
    public:
     System();
     std::vector<std::string> SysFileRead(std::string);
-    Processor &Cpu();
+    Processor& Cpu();
     unsigned short TotalProcesses();
     void Processes();
     float MemoryUtilization();
@@ -28,6 +28,10 @@ class System {
     std::string Kernel();
     std::string OperatingSystem();
     std::string Hostname();
+    const char* GetOsName();
+    float GetDiskFree();
+    float GetDiskAvailable();
+    float GetDiskTotal();
     std::vector<Process> processes_;
 
     float memory_Utilization = 0.0f;

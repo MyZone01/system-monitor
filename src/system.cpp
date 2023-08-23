@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <linux/stat.h>
+#include <sys/statvfs.h>
 #include <sys/sysinfo.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -29,6 +30,24 @@ std::vector<std::string> System::SysFileRead(std::string filename) {
     }
     proc_Sys.close();
     return words;
+}
+
+const char* System::GetOsName() {
+#ifdef _WIN32
+    return "Windows 32-bit";
+#elif _WIN64
+    return "Windows 64-bit";
+#elif __APPLE__ || __MACH__
+    return "Mac OSX";
+#elif __linux__
+    return "Linux";
+#elif __FreeBSD__
+    return "FreeBSD";
+#elif __unix || __unix__
+    return "Unix";
+#else
+    return "Other";
+#endif
 }
 
 std::string System::OperatingSystem() {
@@ -102,7 +121,6 @@ void System::Processes() {
 
 float System::MemoryUtilization() {
     long totalram = 0;
-    long freeram = 0;
     long availram = 0;
 
     std::ifstream meminfoFile("/proc/meminfo");
@@ -120,8 +138,6 @@ float System::MemoryUtilization() {
         if (iss >> key >> value) {
             if (key == "MemTotal:") {
                 totalram = value;
-            } else if (key == "MemFree:") {
-                freeram = value;
             } else if (key == "MemAvailable:") {
                 availram = value;
             }
@@ -191,6 +207,44 @@ long int System::UpTime() {
     struct sysinfo info;
     sysinfo(&info);
     return info.uptime;
+}
+
+// Function to fetch disk usage information for /dev/sdc on WSL
+float System::GetDiskFree() {
+    // Fetch Disk Usage information using statvfs
+    struct statvfs stat;
+    if (statvfs("/", &stat) == 0) {
+        return static_cast<float>(stat.f_frsize * stat.f_bfree);
+        // return static_cast<float>(totalSpace - usedSpace) / totalSpace * 100.0f;
+
+        // Draw Disk Usage UI
+    }
+    return 0.0f;
+}
+
+// Function to fetch disk usage information for /dev/sdc on WSL
+float System::GetDiskAvailable() {
+    // Fetch Disk Usage information using statvfs
+    struct statvfs stat;
+    if (statvfs("/", &stat) == 0) {
+        return static_cast<float>(stat.f_frsize * stat.f_bavail);
+        // return static_cast<float>(totalSpace - usedSpace) / totalSpace * 100.0f;
+
+        // Draw Disk Usage UI
+    }
+    return 0.0f;
+}
+
+float System::GetDiskTotal() {
+    // Fetch Disk Usage information using statvfs
+    struct statvfs stat;
+    if (statvfs("/", &stat) == 0) {
+        return static_cast<float>(stat.f_frsize * stat.f_blocks);
+        // return static_cast<float>(totalSpace - usedSpace) / totalSpace * 100.0f;
+
+        // Draw Disk Usage UI
+    }
+    return 0.0f;
 }
 
 System::System() {
