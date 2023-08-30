@@ -59,7 +59,7 @@ $ tree system-monitor
     +   [x] This graph should contain some kind of checkbox or button to be able to stop the animation whenever the user desires to do so.
     +   [x] Additionally, it should also have two slider bars. The first slider bar should be able to control the `FPS` of the graph, and the second slider bar should control the `y` scale of the graph.
     +   [x] `CPU` should present this graph with an overlay text saying the current percentage of the CPU.
-    +   [ ] `Fan`, should include the following information, the status of the fan, (enable/active), the current speed and the level. And should also present the graph stated above.
+    +   [x] `Fan`, should include the following information, the status of the fan, (enable/active), the current speed and the level. And should also present the graph stated above.
     +   [x] `Thermal`, should present the graph stated above with an overlay text saying the current temperature of the computer (usually the cpu sensor). 
 
     ![image](assets/system.gif)
@@ -90,6 +90,6 @@ $ tree system-monitor
         **452755738 bytes** => **431.78 MB**. // perfect\
         **452755738 bytes** => **0.42 GB**. // too small\
         **452755738 bytes** => **442144.28.6 KB**. // too big
-    +   [ ] The visual display should go from 0GB to 2GB
+    +   [x] The visual display should go from 0GB to 2GB
 
     ![image](assets/network.gif)
