@@ -23,96 +23,6 @@ using namespace gl;
 #else
 #include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
 #endif
-
-// Define a structure to hold interface stats
-struct InterfaceStats {
-    std::string interfaceName;
-    std::string ipAddress;
-    std::vector<long long> stats;
-};
-
-std::string getIPAddress(const std::string &interfaceName) {
-    int fd;
-    struct ifreq ifr;
-
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
-
-    ifr.ifr_addr.sa_family = AF_INET;
-    strncpy(ifr.ifr_name, interfaceName.c_str(), IFNAMSIZ - 1);
-
-    if (ioctl(fd, SIOCGIFADDR, &ifr) < 0) {
-        return "";
-    }
-
-    close(fd);
-
-    return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
-}
-
-std::vector<InterfaceStats> ReadNetworkStats() {
-    std::ifstream file("/proc/net/dev");
-    std::vector<InterfaceStats> stats;
-
-    if (file) {
-        std::string line;
-        std::getline(file, line);  // Skip the header line
-        std::getline(file, line);  // Skip the header line
-
-        while (std::getline(file, line)) {
-            std::istringstream iss(line);
-            std::string interface;
-            std::vector<long long> interfaceStats;
-
-            iss >> interface;
-            interface = interface.substr(0, interface.find_last_of(':'));
-            for (int i = 0; i < 16; i++) {
-                long long value;
-                iss >> value;
-                interfaceStats.push_back(value);
-            }
-
-            std::string ipAddress = getIPAddress(interface);
-
-            // Create an InterfaceStats object and add it to the vector
-            stats.push_back({interface, ipAddress, interfaceStats});
-        }
-
-        file.close();
-    }
-
-    return stats;
-}
-
-// Function to convert bytes to a human-readable format (GB, MB, KB)
-std::string formatBytes(long bytes) {
-    const char *units[] = {"B", "KB", "MB", "GB"};
-    int index = 0;
-
-    double value = static_cast<double>(bytes);
-    while (value >= 1024.0 && index < 3) {
-        value /= 1024.0;
-        index++;
-    }
-
-    std::stringstream ss;
-
-    if (index == 0) {  // No need for decimals for Bytes
-        ss << static_cast<long>(value) << " " << units[index];
-    } else {
-        long wholePart = static_cast<long>(value);
-        long decimalPart = static_cast<long>((value - wholePart) * 100);  // Get two decimal places
-        ss << wholePart << ".";
-
-        if (decimalPart < 10) {
-            ss << "0";  // To ensure two decimal digits
-        }
-
-        ss << decimalPart << " " << units[index];
-    }
-
-    return ss.str();
-}
-
 // Function to calculate the progress value based on received and total bytes
 float calculateProgress(long received, long total) {
     if (total == 0)
@@ -121,35 +31,6 @@ float calculateProgress(long received, long total) {
     float progress = static_cast<float>(received) / static_cast<float>(total);
     return progress;
     // return std::min(std::max(progress, 0.0f), 1.0f);
-}
-
-float GetCPUUsage() {
-    std::ifstream file("/proc/stat");
-
-    std::string line;
-    std::getline(file, line);
-
-    std::vector<int> values;
-
-    std::stringstream ss(line);
-
-    std::string token;
-    ss >> token;
-
-    int value;
-    while (ss >> value) {
-        values.push_back(value);
-    }
-
-    int idle = values[3];
-    int total = 0;
-    for (int i : values) {
-        total += i;
-    }
-
-    float usage = 100.0f * (1.0f - (float)idle / (float)total);
-
-    return usage;
 }
 
 bool IsSubstring(const std::string &str, const std::string &substring) {
@@ -301,11 +182,12 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     ImGui::ProgressBar(system.memory_Shared, ImVec2(-1, 0), "");
     ImGui::TextColored(ImVec4(1, 1, 1, 1), "Memory Swap: %d [%%]", (int)(system.memory_Swap * 100));
     ImGui::ProgressBar(system.memory_Swap, ImVec2(-1, 0), "");
-    auto _totalRAM = formatBytes(system.MemoryTotal());
-    auto _totalSWAP = formatBytes(system.MemoryTotalSwap());
-    auto _freeRAM = formatBytes(system.MemoryFree());
-    auto _freeSWAP = formatBytes(system.MemoryFreeSwap());
-    ImGui::Text("Total RAM: %s", _totalRAM.c_str());
+    auto _totalRAM = system.MemoryTotal();
+    auto totalRAM = Format::ReadableSize(_totalRAM);
+    auto _totalSWAP = Format::ReadableSize(system.MemoryTotalSwap());
+    auto _freeRAM = Format::ReadableSize(system.MemoryFree());
+    auto _freeSWAP = Format::ReadableSize(system.MemoryFreeSwap());
+    ImGui::Text("Total RAM: %s", totalRAM.c_str());
     ImGui::SameLine();
     ImGui::Text("Total SWAP: %s", _totalSWAP.c_str());
     ImGui::SameLine();
@@ -316,10 +198,10 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     float diskUsage = usedSpace / totalSpace * 100.0f;
     ImGui::Text("Disk Usage: %.1f%%", diskUsage);
     ImGui::ProgressBar(diskUsage / 100.0f, ImVec2(-1, 0), "");
-    auto _totalDisk = formatBytes((long)totalSpace);
-    auto _usedDisk = formatBytes((long)usedSpace);
-    auto _freeDisk = formatBytes((long)freeSpace);
-    auto _availableDisk = formatBytes((long)availableSpace);
+    auto _totalDisk = Format::ReadableSize((long)totalSpace);
+    auto _usedDisk = Format::ReadableSize((long)usedSpace);
+    auto _freeDisk = Format::ReadableSize((long)freeSpace);
+    auto _availableDisk = Format::ReadableSize((long)availableSpace);
     ImGui::Text("Total: %s", _totalDisk.c_str());
     ImGui::SameLine();
     ImGui::Text("Used: %s", _usedDisk.c_str());
@@ -344,13 +226,13 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
     ImGui::NextColumn();
     ImGui::Text("UID");
     ImGui::NextColumn();
-    ImGui::Text("CORE [%%]");
+    ImGui::Text("CPU [%%]");
     ImGui::NextColumn();
-    ImGui::Text("RAM [KB]");
+    ImGui::Text("RAM [%%]");  // TODO: Percentage RAM %
     ImGui::NextColumn();
     ImGui::Text("UPTIME");
     ImGui::NextColumn();
-    ImGui::Text("STATUS");
+    ImGui::Text("STATE");
     ImGui::NextColumn();
     ImGui::Text("COMMAND");
     ImGui::NextColumn();
@@ -363,6 +245,7 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
                 if (ImGui::Selectable(label.c_str(), selectedProcess[processPID], ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap)) {
                     selectedProcess[processPID] = !selectedProcess[processPID];
                 }
+                auto ramUsage = ((float)atoi(system.processes_[i].Read_Ram().c_str()) / (float)_totalRAM) * 100;
                 ImGui::NextColumn();
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Parent().c_str());
                 ImGui::NextColumn();
@@ -372,7 +255,7 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
                 ImGui::NextColumn();
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%d", (int)(system.processes_[i].Read_Cpu() * 100));
                 ImGui::NextColumn();
-                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Ram().c_str());
+                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%.2f", ramUsage);
                 ImGui::NextColumn();
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", Format::ElapsedTime(system.processes_[i].Read_Uptime()).c_str());
                 ImGui::NextColumn();
@@ -380,9 +263,6 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
                 ImGui::NextColumn();
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", system.processes_[i].Read_Command().c_str());
                 ImGui::NextColumn();
-                // if (selectedProcess == true) {
-                //     ImGui::PopStyleColor();
-                // }
             }
         }
     }
@@ -394,6 +274,7 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
                 if (ImGui::Selectable(label.c_str(), selectedProcess[processPID], ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap)) {
                     selectedProcess[processPID] = !selectedProcess[processPID];
                 }
+                auto ramUsage = ((float)atoi(system.processes_[i].Read_Ram().c_str()) / (float)_totalRAM) * 100;
                 ImGui::NextColumn();
                 ImGui::Text("%s", system.processes_[i].Read_Parent().c_str());
                 ImGui::NextColumn();
@@ -403,7 +284,7 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
                 ImGui::NextColumn();
                 ImGui::Text("%d", (int)(system.processes_[i].Read_Cpu() * 100));
                 ImGui::NextColumn();
-                ImGui::Text("%s", system.processes_[i].Read_Ram().c_str());
+                ImGui::Text("%.2f", ramUsage);
                 ImGui::NextColumn();
                 ImGui::Text("%s", Format::ElapsedTime(system.processes_[i].Read_Uptime()).c_str());
                 ImGui::NextColumn();
@@ -411,9 +292,6 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
                 ImGui::NextColumn();
                 ImGui::Text("%s", system.processes_[i].Read_Command().c_str());
                 ImGui::NextColumn();
-                // if (selectedProcess == true) {
-                //     ImGui::PopStyleColor();
-                // }
             }
         }
     }
@@ -422,7 +300,7 @@ void memoryProcessesWindow(const char *id, ImVec2 size, ImVec2 position, System 
 }
 
 void networkWindow(const char *id, ImVec2 size, ImVec2 position) {
-    std::vector<InterfaceStats> networkStats = ReadNetworkStats();
+    std::vector<InterfaceStats> networkStats = Network::ReadNetworkStats();
 
     ImGui::Begin(id);
     ImGui::SetWindowSize(id, size);
@@ -447,7 +325,7 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position) {
             ImGui::Separator();
 
             for (int i = 0; i < 8; i++) {
-                std::string rxValue = formatBytes(interface.stats[i]);
+                std::string rxValue = Format::ReadableSize(interface.stats[i]);
 
                 ImGui::Text("%s", rxValue.c_str());
                 ImGui::NextColumn();
@@ -466,7 +344,7 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position) {
             ImGui::Separator();
 
             for (int i = 0; i < 8; i++) {
-                std::string txValue = formatBytes(interface.stats[i + 8]);
+                std::string txValue = Format::ReadableSize(interface.stats[i + 8]);
 
                 ImGui::Text("%s", txValue.c_str());
                 ImGui::NextColumn();
@@ -490,8 +368,8 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position) {
                     std::string rxProgressLabel = "RX Progress##" + interface.interfaceName;
                     ImGui::ProgressBar(rxProgress, ImVec2(-1, 0), rxProgressLabel.c_str());
 
-                    std::string receivedBytesLabel = "Received: " + formatBytes(receivedBytes);
-                    std::string totalBytesLabel = "Total: " + formatBytes(totalBytes);
+                    std::string receivedBytesLabel = "Received: " + Format::ReadableSize(receivedBytes);
+                    std::string totalBytesLabel = "Total: " + Format::ReadableSize(totalBytes);
                     ImGui::Text("%s", receivedBytesLabel.c_str());
                     ImGui::SameLine();
                     ImGui::Text("%s", totalBytesLabel.c_str());
@@ -514,8 +392,8 @@ void networkWindow(const char *id, ImVec2 size, ImVec2 position) {
                     std::string txProgressLabel = "TX Progress##" + interface.interfaceName;
                     ImGui::ProgressBar(txProgress, ImVec2(-1, 0), txProgressLabel.c_str());
 
-                    std::string transmittedBytesLabel = "Transmitted: " + formatBytes(transmittedBytes);
-                    std::string totalBytesLabel = "Total: " + formatBytes(totalBytes);
+                    std::string transmittedBytesLabel = "Transmitted: " + Format::ReadableSize(transmittedBytes);
+                    std::string totalBytesLabel = "Total: " + Format::ReadableSize(totalBytes);
                     ImGui::Text("%s", transmittedBytesLabel.c_str());
                     ImGui::SameLine();
                     ImGui::Text("%s", totalBytesLabel.c_str());
