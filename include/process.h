@@ -18,7 +18,6 @@ class Process {
     int Read_Pid();
     float Read_Cpu();
     long int Read_Uptime();
-    void Log(int);
     bool Exist();
 
    private:
@@ -39,7 +38,7 @@ class Process {
     std::string User();
     std::string Command();
     std::string Ram();
-    std::string Status();
+    std::string State();
 
     std::vector<std::string> procFileRead(std::string);
 

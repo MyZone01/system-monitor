@@ -42,7 +42,7 @@ std::string Process::Name() {
     }
 }
 
-std::string Process::Status() {
+std::string Process::State() {
     if (Process::Exist()) {
         Process::status.clear();
         std::vector<std::string> words = Process::procFileRead("status");

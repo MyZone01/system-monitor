@@ -20,7 +20,7 @@ void Updater::ProcessesUpdater(System* system) {
         system->cpu1m = system->cpu_.CpuMean1m();
         system->cpu5m = system->cpu_.CpuMean5m();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
 

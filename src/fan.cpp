@@ -73,6 +73,3 @@ std::string Fan::GetBatteryLevel() {
     file >> level;
     return level.c_str();
 }
-
-Fan::Fan() {
-}

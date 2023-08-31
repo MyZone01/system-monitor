@@ -5,9 +5,6 @@
 
 using std::string;
 
-// INPUT: Long int measuring seconds
-// OUTPUT: HH:MM:SS
-
 string Format::ElapsedTime(long int seconds) {
     time_t rawTime = seconds;
     struct tm *ptm = gmtime(&rawTime);
